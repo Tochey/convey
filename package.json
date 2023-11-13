@@ -1,0 +1,13 @@
+{
+  "name": "convey",
+  "version": "1.0.0",
+  "description": "deploy your express apps to aws without a phd",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "workspaces": [
+    "packages/*"
+  ]
+}
