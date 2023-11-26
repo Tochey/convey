@@ -5,8 +5,14 @@ import {
   Compatibility,
   FargateService,
   TaskDefinition,
+  ContainerImage,
 } from "aws-cdk-lib/aws-ecs";
 import { ApplicationLoadBalancer } from "aws-cdk-lib/aws-elasticloadbalancingv2";
+import {
+  ComputeType,
+  LinuxBuildImage,
+  Project,
+} from "aws-cdk-lib/aws-codebuild";
 
 const APP_NAME = "convey";
 
@@ -66,6 +72,11 @@ export function Core({ stack }: StackContext) {
     compatibility: Compatibility.EXTERNAL,
   });
 
+  td.addContainer("coreContainer", {
+    image: ContainerImage.fromAsset("../../server/"),
+    containerName: `${APP_NAME}-core`,
+  });
+
   const svc = new FargateService(stack, "coreService", {
     serviceName: `${APP_NAME}-core`,
     cluster: cluster,
@@ -73,12 +84,16 @@ export function Core({ stack }: StackContext) {
       subnetType: SubnetType.PRIVATE_WITH_EGRESS,
     },
     taskDefinition: td,
+    desiredCount: 1,
   });
 
-  /* 
-  TODO: 
-  create core stuff:
-    - service
-    - route53
-  */
+  const codebuild = new Project(stack, "codebuild", {
+    projectName: `${APP_NAME}-codebuild`,
+    vpc: vpc,
+    environment: {
+      buildImage: LinuxBuildImage.STANDARD_5_0,
+      computeType: ComputeType.LARGE,
+      privileged: true,
+    },
+  });
 }
