@@ -3,7 +3,6 @@ import { Construct } from "constructs";
 import * as lambda from "aws-cdk-lib/aws-lambda";
 import * as apigw from "aws-cdk-lib/aws-apigateway";
 import { Duration } from "aws-cdk-lib";
-import { CfnOutput } from "aws-cdk-lib";
 
 export class App extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
