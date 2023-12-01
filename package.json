@@ -3,12 +3,19 @@
   "version": "1.0.0",
   "description": "deploy your express apps to aws without a phd",
   "scripts": {
-    "sst": "cd packages/convey && npm run dev",
-    "backend:dev" : "cd packages/server/src && nodemon --exec ts-node index.ts "
+    "deploy:app": " cd packages/cdk && npx cdk deploy ConveyApp --require-approval never",
+    "deploy:core": " cd packages/cdk && npx cdk deploy ConveyCore --require-approval never",
+    "deploy:all": " cd packages/cdk && npx cdk deploy --all --require-approval never",
+    "backend": "cross-env NODE_ENV=production node packages/server/build/index.js",
+    "backend:build": "tsc --build packages/server/tsconfig.json",
+    "backend:dev": "cross-env NODE_ENV=development nodemon --exec ts-node packages/server/src/index.ts "
   },
   "author": "",
   "license": "ISC",
   "workspaces": [
     "packages/*"
-  ]
+  ],
+  "devDependencies": {
+    "cross-env": "^7.0.3"
+  }
 }
