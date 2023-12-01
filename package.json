@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "description": "deploy your express apps to aws without a phd",
   "scripts": {
-    "infra-dev": "cd packages/convey && npm run dev"
+    "sst": "cd packages/convey && npm run dev",
+    "backend:dev" : "cd packages/server/src && nodemon --exec ts-node index.ts "
   },
   "author": "",
   "license": "ISC",

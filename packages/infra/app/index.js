@@ -1,5 +1,4 @@
 const express = require("express");
-const serverless = require("serverless-http");
 const app = express();
 
 const cors = require("cors");
@@ -62,4 +61,8 @@ app.get("/", (req, res) => {
   res.type("html").send(html);
 });
 
-export const handler = serverless(app);
+app.get("/env", (req, res) => {
+  res.json(process.env.myName);
+});
+
+module.exports = app;

@@ -1,5 +1,5 @@
 {
-  "name": "convey",
+  "name": "@convey/infra",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -17,8 +17,5 @@
     "constructs": "10.2.69",
     "typescript": "^5.2.2",
     "@tsconfig/node18": "^18.2.2"
-  },
-  "workspaces": [
-    "packages/*"
-  ]
+  }
 }
