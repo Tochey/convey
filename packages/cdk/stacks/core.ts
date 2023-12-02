@@ -7,14 +7,6 @@ export class Core extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
-    const scheduler = new NodejsFunction(this, "scheduler", {
-      functionName: "scheduler",
-      entry: "src/functions/scheduler/index.ts",
-      projectRoot: "../../",
-      bundling: {
-        minify: true,
-        sourceMap: true,
-      },
-    });
+    
   }
 }

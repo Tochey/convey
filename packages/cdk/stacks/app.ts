@@ -26,5 +26,7 @@ export class App extends cdk.Stack {
         allowOrigins: apigw.Cors.ALL_ORIGINS,
       },
     });
+
+    // TODO: add CB_DEPLOYMENT_SERVICE_ROLE to app lambda
   }
 }

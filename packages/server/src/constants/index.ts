@@ -1,0 +1,1 @@
+export const VALIDATION_ERR_MESSAGE = "Please verify your request body and try again";
