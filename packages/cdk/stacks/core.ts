@@ -35,6 +35,7 @@ export class Core extends cdk.Stack {
     const queue = new sqs.Queue(this, "convey-deployment-queue", {
       queueName: "convey-queue",
       visibilityTimeout: cdk.Duration.seconds(300),
+
     });
     queue.grantSendMessages(cbServeiceRole);
 
@@ -45,7 +46,11 @@ export class Core extends cdk.Stack {
       projectRoot: "../../",
     });
 
-    worker.addEventSource(new SqsEventSource(queue));
+    worker.addEventSource(new SqsEventSource(queue, {
+      
+    }));
+
+    //TODO: create vpc and subnet configuration
 
     const cluster = new ecs.Cluster(this, "convey-cluster", {
       clusterName: "convey",
@@ -105,7 +110,7 @@ export class Core extends cdk.Stack {
       parameterName: "/convey/app/queueUrl",
       stringValue: queue.queueUrl,
     });
-    
+
     new ssm.StringParameter(this, "bucket-param", {
       parameterName: "/convey/app/bucketName",
       stringValue: bucket.bucketName,
