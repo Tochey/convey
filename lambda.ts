@@ -1,7 +1,6 @@
 import {
   ECSClient,
-  RunTaskCommand,
-  StartTaskCommand,
+  RunTaskCommand
 } from "@aws-sdk/client-ecs";
 
 const client = new ECSClient({ region: "us-east-1" });

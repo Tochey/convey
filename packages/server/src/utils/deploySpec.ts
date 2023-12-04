@@ -1,12 +1,12 @@
 export const spec = `version: 0.2
 
-#env:
+env:
   #variables:
      # key: "value"
      # key: "value"
-  #parameter-store:
-     # key: "value"
-     # key: "value"
+  parameter-store:
+     bucketName: "/convey/app/bucketName"
+     queueUrl: "/convey/app/queueUrl"
   #secrets-manager:
      # key: secret-id:json-key:version-stage:version-id
      # key: secret-id:json-key:version-stage:version-id
@@ -34,12 +34,13 @@ phases:
   build:
     commands:
       - env 
-      - aws s3 cp s3://convey-bucket/scripts . --recursive
+      - aws s3 cp s3://$bucketName/scripts . --recursive
       - node docker.js
       - rm -rf docker.js
       - cd /tmp
       - tar -C $CODEBUILD_SRC_DIR -zcvf build.tar.gz .
-      - aws s3 cp build.tar.gz s3://convey-bucket/customer/builds/build.tar.gz
+      - aws s3 cp build.tar.gz s3://$bucketName/customer/builds/build.tar.gz
+      - aws sqs send-message --queue-url $queueUrl --message-body "s3://$bucketName/customer/builds/build.tar.gz"
   #post_build:
     #commands:
       # - command
@@ -62,12 +63,3 @@ phases:
 #cache:
   #paths:
     # - paths`;
-
-
-
-    // build:
-  //   commands:
-  //     - env
-  //     - aws --version
-  //     - npm i
-  //     - aws s3 cp . s3://convey-bucket/deployment/convey-deploy/ --recursive

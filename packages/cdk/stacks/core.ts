@@ -5,6 +5,10 @@ import * as iam from "aws-cdk-lib/aws-iam";
 import * as sqs from "aws-cdk-lib/aws-sqs";
 import * as ecs from "aws-cdk-lib/aws-ecs";
 import * as s3deploy from "aws-cdk-lib/aws-s3-deployment";
+import { NodejsFunction } from "aws-cdk-lib/aws-lambda-nodejs";
+import { Runtime } from "aws-cdk-lib/aws-lambda";
+import { SqsEventSource } from "aws-cdk-lib/aws-lambda-event-sources";
+import * as ssm from "aws-cdk-lib/aws-ssm";
 
 export class Core extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
@@ -33,6 +37,15 @@ export class Core extends cdk.Stack {
       visibilityTimeout: cdk.Duration.seconds(300),
     });
     queue.grantSendMessages(cbServeiceRole);
+
+    const worker = new NodejsFunction(this, "worker", {
+      entry: "src/functions/worker/index.ts",
+      handler: "handler",
+      runtime: Runtime.NODEJS_18_X,
+      projectRoot: "../../",
+    });
+
+    worker.addEventSource(new SqsEventSource(queue));
 
     const cluster = new ecs.Cluster(this, "convey-cluster", {
       clusterName: "convey",
@@ -86,6 +99,16 @@ export class Core extends cdk.Stack {
       environment: {
         AWS_SDK_LOAD_CONFIG: "true",
       },
+    });
+
+    new ssm.StringParameter(this, "url-param", {
+      parameterName: "/convey/app/queueUrl",
+      stringValue: queue.queueUrl,
+    });
+    
+    new ssm.StringParameter(this, "bucket-param", {
+      parameterName: "/convey/app/bucketName",
+      stringValue: bucket.bucketName,
     });
   }
 }

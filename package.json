@@ -17,6 +17,7 @@
     "packages/*"
   ],
   "devDependencies": {
+    "@types/node": "^20.10.3",
     "cross-env": "^7.0.3"
   },
   "dependencies": {
