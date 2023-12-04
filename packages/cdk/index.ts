@@ -4,14 +4,15 @@ import * as cdk from "aws-cdk-lib";
 import { Core, App } from "./stacks";
 
 const app = new cdk.App();
-new App(app, "ConveyApp", {
+
+new Core(app, "ConveyCore", {
   env: {
     account: "332521570261",
     region: "us-east-1",
   },
 });
 
-new Core(app, "ConveyCore", {
+const appStack = new App(app, "ConveyApp", {
   env: {
     account: "332521570261",
     region: "us-east-1",

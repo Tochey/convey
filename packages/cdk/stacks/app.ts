@@ -14,7 +14,7 @@ export class App extends cdk.Stack {
       timeout: Duration.seconds(10),
       environment: {
         NPM_CONFIG_CACHE: "/tmp/.npm",
-        AWS_LWA_READINESS_CHECK_PATH : "/health"
+        AWS_LWA_READINESS_CHECK_PATH: "/health",
       },
     });
 
@@ -27,6 +27,6 @@ export class App extends cdk.Stack {
       },
     });
 
-    // TODO: add CB_DEPLOYMENT_SERVICE_ROLE to app lambda
+    // TODO: add CB_DEPLOYMENT_SERVICE_ROLE env to app lambda
   }
 }

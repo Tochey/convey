@@ -4,8 +4,6 @@ import {
   CreateProjectCommandInput,
   StartBuildCommand,
   StartBuildCommandInput,
-  CreateWebhookCommand,
-  CreateWebhookCommandInput,
 } from "@aws-sdk/client-codebuild";
 import CustomError from "../utils/custom-err";
 import { spec } from "../utils/deploySpec";
@@ -14,19 +12,20 @@ interface DeploymentProps {
   id: string;
   clone_url: string;
   branch: string;
+  rootDirectory: string;
+  buildCommand: string;
+  startCommand: string;
+  port : string
 }
 
 const client = new CodeBuildClient({ region: "us-east-1" });
 
 export async function createCBDeployment(props: DeploymentProps) {
-  const { id, clone_url, branch } = props;
-  const cpcInput = createProjectCommandInput(id, clone_url);
-  const sbcInput = startBuildCommandInput(id);
-  const wbcInput = createWebhookCommandInput(id, branch);
+  const cpcInput = createProjectCommandInput(props);
+  const sbcInput = startBuildCommandInput(props.id);
 
   try {
     await client.send(new CreateProjectCommand(cpcInput));
-    await client.send(new CreateWebhookCommand(wbcInput));
     await client.send(new StartBuildCommand(sbcInput));
   } catch (err) {
     console.error(err);
@@ -35,9 +34,9 @@ export async function createCBDeployment(props: DeploymentProps) {
 }
 
 function createProjectCommandInput(
-  id: string,
-  clone_url: string
+  props: DeploymentProps
 ): CreateProjectCommandInput {
+  const { id, clone_url, rootDirectory, startCommand, buildCommand, port } = props;
   return {
     name: id,
     source: {
@@ -52,6 +51,24 @@ function createProjectCommandInput(
       type: "LINUX_LAMBDA_CONTAINER",
       computeType: "BUILD_LAMBDA_4GB",
       image: "aws/codebuild/amazonlinux-x86_64-lambda-standard:nodejs18",
+      environmentVariables: [
+        {
+          name: "ROOT_DIRECTORY",
+          value: rootDirectory,
+        },
+        {
+          name: "START_COMMAND",
+          value: startCommand,
+        },
+        {
+          name: "BUILD_COMMAND",
+          value: buildCommand,
+        },
+        {
+          name: "PORT",
+          value: port,
+        },
+      ],
     },
     serviceRole:
       process.env.NODE_ENV === "production"
@@ -63,15 +80,5 @@ function createProjectCommandInput(
 function startBuildCommandInput(id: string): StartBuildCommandInput {
   return {
     projectName: id,
-  };
-}
-
-function createWebhookCommandInput(
-  id: string,
-  branch: string
-): CreateWebhookCommandInput {
-  return {
-    projectName: id,
-    branchFilter: branch,
   };
 }

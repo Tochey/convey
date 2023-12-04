@@ -8,7 +8,8 @@
     "deploy:all": " cd packages/cdk && npx cdk deploy --all --require-approval never",
     "backend": "cross-env NODE_ENV=production node packages/server/build/index.js",
     "backend:build": "tsc --build packages/server/tsconfig.json",
-    "backend:dev": "cross-env NODE_ENV=development AWS_PROFILE=convey nodemon --exec ts-node packages/server/src/index.ts "
+    "backend:dev": "cross-env NODE_ENV=development AWS_PROFILE=convey nodemon --exec ts-node packages/server/src/index.ts ",
+    "builder:dev": "cross-env NODE_ENV=development AWS_PROFILE=convey  ts-node packages/builder/index.ts "
   },
   "author": "",
   "license": "ISC",
@@ -19,6 +20,10 @@
     "cross-env": "^7.0.3"
   },
   "dependencies": {
-    "@aws-sdk/client-codebuild": "^3.462.0"
+    "@aws-sdk/client-api-gateway": "^3.465.0",
+    "@aws-sdk/client-codebuild": "^3.462.0",
+    "@aws-sdk/client-ecs": "^3.465.0",
+    "@aws-sdk/client-lambda": "^3.465.0",
+    "@aws-sdk/client-s3": "^3.465.0"
   }
 }

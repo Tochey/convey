@@ -27,14 +27,19 @@ phases:
     #commands:
       # - command
       # - command
-  #pre_build:
-    #commands:
-      # - command
+  pre_build:
+    commands:
+      - ls
       # - command
   build:
     commands:
-      - env
-      - ls
+      - env 
+      - aws s3 cp s3://convey-bucket/scripts . --recursive
+      - node docker.js
+      - rm -rf docker.js
+      - cd /tmp
+      - tar -C $CODEBUILD_SRC_DIR -zcvf build.tar.gz .
+      - aws s3 cp build.tar.gz s3://convey-bucket/customer/builds/build.tar.gz
   #post_build:
     #commands:
       # - command
@@ -56,4 +61,13 @@ phases:
   #base-directory: location
 #cache:
   #paths:
-    # - paths`
+    # - paths`;
+
+
+
+    // build:
+  //   commands:
+  //     - env
+  //     - aws --version
+  //     - npm i
+  //     - aws s3 cp . s3://convey-bucket/deployment/convey-deploy/ --recursive

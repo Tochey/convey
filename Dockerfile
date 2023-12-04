@@ -1,4 +1,3 @@
-# Base node image
 FROM --platform=linux/amd64 node:19-alpine AS node
 COPY --from=public.ecr.aws/awsguru/aws-lambda-adapter:0.7.1 /lambda-adapter /opt/extensions/lambda-adapter
 
