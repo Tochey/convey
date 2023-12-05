@@ -4,6 +4,8 @@ import { Handler, NextFunction, Response } from "express";
 import CustomError from "../utils/custom-err";
 import { JsonWebTokenError } from "jsonwebtoken";
 import { DecodedToken, Request } from "../types";
+import { REFRESH_TOKEN_HEADER_KEY, X_TOKEN_HEADER_KEY } from "../constants";
+import { validateToken } from "../utils/tokens";
 
 function authenticateRequest(): Handler {
   return async (
@@ -12,13 +14,12 @@ function authenticateRequest(): Handler {
     next: NextFunction
   ): Promise<void> => {
     let token: DecodedToken;
-    const { authorization } = req.headers;
+    const headers = req.headers;
+    const accessToken = headers[X_TOKEN_HEADER_KEY] as string;
+    const refreshToken = headers[REFRESH_TOKEN_HEADER_KEY] as string;
     try {
-      if (authorization) {
-        // token = verifyToken(authorization.split(' ')[1])
-        token = {
-          uid: "test",
-        };
+      if (accessToken && refreshToken) {
+        token = await validateToken(accessToken, refreshToken, _res);
       } else if (process.env.NODE_ENV === "dev") {
         token = authenticateWithBody(req.body);
       } else {
@@ -29,20 +30,16 @@ function authenticateRequest(): Handler {
         decodedToken: token,
       };
     } catch (err) {
-      if (err instanceof JsonWebTokenError) {
-        // if we fail to verify the token throw
-        return next(new CustomError(401, err.message));
-      }
-      return next(err);
+      return next(new CustomError(401, err.message));
     }
     next();
   };
 }
 
 function authenticateWithBody(body: Request["body"]): DecodedToken {
-  const { uid } = body;
+  const { id } = body;
 
-  if (!uid) {
+  if (!id) {
     throw new CustomError(
       401,
       "Running authorization in dev mode but still no uid was provided"
@@ -50,7 +47,7 @@ function authenticateWithBody(body: Request["body"]): DecodedToken {
   }
 
   return {
-    uid,
+    id,
   };
 }
 

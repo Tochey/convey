@@ -30,13 +30,29 @@ export class Core extends cdk.Stack {
       roleName: "ConveyDeploymentServiceRole",
     });
 
-    bucket.grantWrite(cbServeiceRole);
-
-    const queue = new sqs.Queue(this, "convey-deployment-queue", {
-      queueName: "convey-queue",
-      visibilityTimeout: cdk.Duration.seconds(300),
-
+    const lambdaExecutionRole = new iam.Role(this, "LambdaExecutionRole", {
+      assumedBy: new iam.ServicePrincipal("lambda.amazonaws.com"),
+      roleName: "ConveyLambdaExecutionRole",
+      managedPolicies: [
+        iam.ManagedPolicy.fromAwsManagedPolicyName("AdministratorAccess"),
+      ],
     });
+
+    bucket.grantWrite(cbServeiceRole);
+    const dlq = new sqs.Queue(this, "dlq", {
+      queueName: "convey-dlq",
+      retentionPeriod: cdk.Duration.days(14),
+    });
+
+    const queue = new sqs.Queue(this, "queue", {
+      queueName: "convey-queue",
+      visibilityTimeout: cdk.Duration.minutes(30),
+      deadLetterQueue: {
+        maxReceiveCount: 1,
+        queue: dlq,
+      },
+    });
+
     queue.grantSendMessages(cbServeiceRole);
 
     const worker = new NodejsFunction(this, "worker", {
@@ -44,11 +60,16 @@ export class Core extends cdk.Stack {
       handler: "handler",
       runtime: Runtime.NODEJS_18_X,
       projectRoot: "../../",
+      role: lambdaExecutionRole,
+      timeout: cdk.Duration.seconds(900),
+      retryAttempts: 0,
     });
 
-    worker.addEventSource(new SqsEventSource(queue, {
-      
-    }));
+    worker.addEventSource(
+      new SqsEventSource(queue, {
+        batchSize: 1,
+      })
+    );
 
     //TODO: create vpc and subnet configuration
 

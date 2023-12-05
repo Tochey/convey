@@ -2,7 +2,6 @@ import {
   ECSClient,
   RunTaskCommand,
   DescribeTasksCommand,
-  DescribeContainerInstancesCommand,
 } from "@aws-sdk/client-ecs";
 import {
   LambdaClient,
@@ -11,6 +10,7 @@ import {
   CreateFunctionUrlConfigCommand,
   AddPermissionCommand,
 } from "@aws-sdk/client-lambda";
+import { SQSEvent, Handler } from "aws-lambda";
 
 const ecs = new ECSClient({ region: "us-east-1" });
 const lambda = new LambdaClient({ region: "us-east-1" });
@@ -22,7 +22,11 @@ type ConveyMessage = {
   port: string;
 };
 
-export const handler = async (event: any) => {
+export const handler: Handler<SQSEvent> = async (event) => {
+  // const { Records } = event;
+
+  // const body = JSON.parse(Records[0].body) as ConveyMessage;
+
   const { tasks } = await startBuildContainer();
 
   if (!tasks) {
@@ -62,7 +66,7 @@ async function pollBuildContainer(taskArn: string) {
 
   let status = containers[0].lastStatus;
 
-  while (status !== "STOPPED") {
+  do {
     const { tasks } = await ecs.send(command);
 
     if (!tasks) {
@@ -77,7 +81,29 @@ async function pollBuildContainer(taskArn: string) {
 
     const container = containers[0];
     status = container.lastStatus;
-  }
+
+    await new Promise((resolve) => setTimeout(resolve, 200));
+  } while (status !== "STOPPED");
+
+  // while (status !== "STOPPED") {
+
+  // setTimeout(async () => {
+  //   const { tasks } = await ecs.send(command);
+
+  //   if (!tasks) {
+  //     throw new Error("No tasks found");
+  //   }
+
+  //   const { containers } = tasks[0];
+
+  //   if (!containers) {
+  //     throw new Error("No containers found");
+  //   }
+
+  //   const container = containers[0];
+  //   status = container.lastStatus;
+  //  }, 1000);
+  // }
 }
 
 async function startBuildContainer() {
@@ -111,7 +137,6 @@ async function startBuildContainer() {
         },
       ],
     },
-    count: 1,
   });
   const data = await ecs.send(command);
 
@@ -178,5 +203,3 @@ async function createDeployment() {
 
   console.log(d.FunctionUrl);
 }
-
-handler({});

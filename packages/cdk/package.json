@@ -21,7 +21,6 @@
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.462.0",
-    "@octokit/core": "^5.0.2",
     "aws-cdk-lib": "2.55.1",
     "constructs": "^10.0.0",
     "source-map-support": "^0.5.21"
