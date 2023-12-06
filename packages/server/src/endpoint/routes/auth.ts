@@ -1,7 +1,10 @@
 import { Router } from "express";
 import * as AuthController from "../controllers/auth";
 import z from "zod";
-import { asyncHandler, validateRequest } from "../../middleware/api-util";
+import {
+  asyncHandler,
+  validateRequest,
+} from "../../middleware/api-util";
 import { VALIDATION_ERR_MESSAGE } from "../../constants";
 
 const router = Router();

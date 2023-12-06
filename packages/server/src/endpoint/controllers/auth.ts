@@ -36,11 +36,16 @@ export async function login(req: Request) {
   try {
     const user = await User.findOne({ email });
 
-    if (!user) {
+    if (!user || !user.password) {
+      // github users don't have passwords
       throw new CustomError(401, "Invalid Credentials");
     }
 
-    // compare passwords here
+    const isMatch = await bcrypt.compare(password, user.password);
+
+    if (!isMatch) {
+      throw new CustomError(401, "Invalid Credentials");
+    }
 
     const [accessToken, refreshToken] = await createTokens({
       userId: user._id,
@@ -53,8 +58,6 @@ export async function login(req: Request) {
     });
   } catch (err) {
     console.log(err);
+    return new CustomResponse("Someething went wrong", null, 500);
   }
-
-  // Generic error messages are safer
-  return new CustomResponse("Someething went wrong", null, 500);
 }

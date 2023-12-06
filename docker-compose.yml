@@ -1,0 +1,16 @@
+version: "3.8"
+services:
+  convey-mongodb:
+    container_name: convey-mongodb
+    image: mongo:4.4.18
+    restart: on-failure
+    volumes:
+      - mongo-data:/data/db
+    ports:
+      - 27017:27017
+    networks:
+      - network
+volumes:
+  mongo-data:
+networks:
+  network:

@@ -4,6 +4,7 @@ export const userSchema = new Schema(
   {
     name: {
       type: String,
+      required: true,
     },
     email: {
       type: String,
@@ -21,10 +22,6 @@ export const userSchema = new Schema(
       trim: true,
       minlength: 8,
       maxlength: 128,
-    },
-    role: {
-      type: String,
-      default: "USER",
     },
     provider: {
       type: String,

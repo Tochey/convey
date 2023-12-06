@@ -1,8 +1,5 @@
 import { Handler, NextFunction, Response } from "express";
-// import { verifyToken } from '../utils/token'
-
 import CustomError from "../utils/custom-err";
-import { JsonWebTokenError } from "jsonwebtoken";
 import { DecodedToken, Request } from "../types";
 import { REFRESH_TOKEN_HEADER_KEY, X_TOKEN_HEADER_KEY } from "../constants";
 import { validateToken } from "../utils/tokens";
@@ -42,7 +39,7 @@ function authenticateWithBody(body: Request["body"]): DecodedToken {
   if (!id) {
     throw new CustomError(
       401,
-      "Running authorization in dev mode but still no uid was provided"
+      "Running authorization in dev mode but still no id was provided"
     );
   }
 

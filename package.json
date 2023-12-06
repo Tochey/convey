@@ -8,7 +8,7 @@
     "deploy:all": " cd packages/cdk && npx cdk deploy --all --require-approval never",
     "backend": "cross-env NODE_ENV=production node packages/server/build/index.js",
     "backend:build": "tsc --build packages/server/tsconfig.json",
-    "backend:dev": "cross-env NODE_ENV=development AWS_PROFILE=convey nodemon --exec ts-node packages/server/src/index.ts ",
+    "backend:dev": " concurrently --kill-others \"cross-env NODE_ENV=development AWS_PROFILE=convey nodemon --exec ts-node packages/server/src/index.ts\" \"docker-compose up\" ",
     "builder:dev": "cross-env NODE_ENV=development AWS_PROFILE=convey  ts-node packages/builder/index.ts "
   },
   "author": "",
@@ -19,17 +19,13 @@
   "devDependencies": {
     "@types/bcrypt": "^5.0.2",
     "@types/node": "^20.10.3",
+    "@types/passport": "^1.0.16",
     "cross-env": "^7.0.3"
   },
   "dependencies": {
-    "@aws-sdk/client-api-gateway": "^3.465.0",
-    "@aws-sdk/client-codebuild": "^3.462.0",
     "@aws-sdk/client-ecs": "^3.465.0",
     "@aws-sdk/client-lambda": "^3.465.0",
     "@aws-sdk/client-s3": "^3.465.0",
-    "bcrypt": "^5.1.1",
-    "jsonwebtoken": "^9.0.2",
-    "mongoose": "^8.0.2",
-    "passport-jwt": "^4.0.1"
+    "concurrently": "^8.2.2"
   }
 }

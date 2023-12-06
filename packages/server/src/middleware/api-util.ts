@@ -54,7 +54,7 @@ function validateRequest(validationSchema: ValidationSchema): RequestHandler {
   const { validationErrorMessage } = validationSchema;
   const normalizedValidationSchema = Object.fromEntries(
     Object.entries(validationSchema).filter(
-      ([key]) => key !== "validationErrorMessage"
+      ([key]) => key !== "validationErrorMessage"      
     )
   );
 

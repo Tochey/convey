@@ -21,6 +21,11 @@
     "express": "^4.18.2",
     "jsonwebtoken": "^9.0.2",
     "uuid": "^9.0.1",
-    "zod": "^3.22.2"
+    "zod": "^3.22.2",
+    "bcrypt": "^5.1.1",
+    "mongoose": "^8.0.2",
+    "passport": "^0.7.0",
+    "passport-github2": "^0.1.12",
+    "@aws-sdk/client-codebuild": "^3.462.0"
   }
 }
