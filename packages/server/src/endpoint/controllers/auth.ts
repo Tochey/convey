@@ -7,6 +7,7 @@ import { CustomResponse } from "../../utils/custom-res";
 import bcrypt from "bcrypt";
 import CustomError from "../../utils/custom-err";
 import { createTokens } from "../../utils/tokens";
+import { REFRESH_TOKEN_HEADER_KEY, X_TOKEN_HEADER_KEY } from "../../constants";
 
 export async function register(req: Request) {
   const { email, password, name } = req.body;
@@ -33,31 +34,26 @@ export async function register(req: Request) {
 export async function login(req: Request) {
   const { email, password } = req.body;
 
-  try {
-    const user = await User.findOne({ email });
+  const user = await User.findOne({ email });
 
-    if (!user || !user.password) {
-      // github users don't have passwords
-      throw new CustomError(401, "Invalid Credentials");
-    }
-
-    const isMatch = await bcrypt.compare(password, user.password);
-
-    if (!isMatch) {
-      throw new CustomError(401, "Invalid Credentials");
-    }
-
-    const [accessToken, refreshToken] = await createTokens({
-      userId: user._id,
-      refreshSecret: process.env.JWT_REFRESH_SECRET! + user.password,
-    });
-
-    return new CustomResponse("Logged In Successfully", null, undefined, {
-      X_TOKEN_HEADER_KEY: accessToken,
-      REFRESH_TOKEN_HEADER_KEY: refreshToken,
-    });
-  } catch (err) {
-    console.log(err);
-    return new CustomResponse("Someething went wrong", null, 500);
+  if (!user || !user.password) {
+    // github users don't have passwords
+    throw new CustomError(401, "Invalid Credentials");
   }
+
+  const isMatch = await bcrypt.compare(password, user.password);
+
+  if (!isMatch) {
+    throw new CustomError(401, "Invalid Credentials");
+  }
+
+  const [accessToken, refreshToken] = await createTokens({
+    userId: user._id,
+    refreshSecret: process.env.JWT_REFRESH_SECRET! + user.password,
+  });
+
+  return new CustomResponse("Logged In Successfully", null, undefined, {
+    [X_TOKEN_HEADER_KEY]: accessToken,
+    [REFRESH_TOKEN_HEADER_KEY]: refreshToken,
+  });
 }

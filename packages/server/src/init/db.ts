@@ -1,44 +1,25 @@
 import mongoose from "mongoose";
+import { MongoClientOptions } from "mongodb";
 
-const { MONGO_URI } = process.env;
+export async function connectDb(): Promise<void> {
+  const { MONGO_URI } = process.env;
 
-if (!MONGO_URI) {
-  throw new Error("Please define the MONGO_URI environment variable");
-}
-
-/**
- * Global is used here to maintain a cached connection across hot reloads
- * in development. This prevents connections growing exponentially
- * during API Route usage.
- */
-let cached = global.mongoose;
-
-if (!cached) {
-  cached = global.mongoose = { conn: null, promise: null };
-}
-
-export async function connectDb() {
-  if (cached.conn && cached.conn?._readyState === 1) {
-    return cached.conn;
+  if (!MONGO_URI) {
+    throw new Error("No database url provided");
   }
 
-  const disconnected = cached.conn && cached.conn?._readyState !== 1;
-  if (!cached.promise || disconnected) {
-    const opts: mongoose.ConnectOptions = {
-      connectTimeoutMS: 2000,
-      serverSelectionTimeoutMS: 2000,
-    };
+  const connectionOptions: MongoClientOptions = {
+    connectTimeoutMS: 2000,
+    serverSelectionTimeoutMS: 2000,
+  };
 
-    mongoose.set("strictQuery", true);
-    cached.promise = mongoose
-      .connect(MONGO_URI as string, opts)
-      .then((mongoose) => {
-        return mongoose;
-      })
-      .catch((err) => {
-        console.error(err);
-      });
+  try {
+    await mongoose.connect(MONGO_URI as string, connectionOptions);
+  } catch (error) {
+    console.error(
+      "Failed to connect to database, Exiting with exit status code 1"
+    );
+    console.error(error.message);
+    return process.exit(1);
   }
-  cached.conn = await cached.promise;
-  return cached.conn;
 }

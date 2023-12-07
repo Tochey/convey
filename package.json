@@ -8,8 +8,7 @@
     "deploy:all": " cd packages/cdk && npx cdk deploy --all --require-approval never",
     "backend": "cross-env NODE_ENV=production node packages/server/build/index.js",
     "backend:build": "tsc --build packages/server/tsconfig.json",
-    "backend:dev": " concurrently --kill-others \"cross-env NODE_ENV=development AWS_PROFILE=convey nodemon --exec ts-node packages/server/src/index.ts\" \"docker-compose up\" ",
-    "builder:dev": "cross-env NODE_ENV=development AWS_PROFILE=convey  ts-node packages/builder/index.ts "
+    "backend:dev": " concurrently --kill-others \"cross-env NODE_ENV=development AWS_PROFILE=convey nodemon --exec ts-node packages/server/src/index.ts\" \"docker-compose up\" "
   },
   "author": "",
   "license": "ISC",
