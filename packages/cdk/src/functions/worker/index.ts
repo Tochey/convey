@@ -12,6 +12,8 @@ import {
 } from "@aws-sdk/client-lambda";
 import { SQSEvent, Handler } from "aws-lambda";
 import mongoose, { mongo } from "mongoose";
+import fs from "fs";
+import path from "path";
 
 const ecs = new ECSClient({ region: "us-east-1" });
 const lambda = new LambdaClient({ region: "us-east-1" });
@@ -22,27 +24,41 @@ type ConveyMessage = {
   s3Path: string;
 };
 
-export const handler: Handler<SQSEvent> = async (event) => {
+export const handler = async (event: SQSEvent) => {
   const { Records } = event;
   const body = JSON.parse(Records[0].body) as ConveyMessage;
+  await initDB();
+  const model = mongoose.model(
+    "Deployment",
+    new mongoose.Schema({
+      user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+      github_url: String,
+      branch: String,
+      buildCommand: String,
+      startCommand: String,
+      rootDirectory: String,
+      port: Number,
+      deploy_url: String,
+    })
+  );
 
-  const config = await getDeploymentConfig(body.deploymentId);
+  const config = await getDeploymentConfig(model, body.deploymentId);
   const { tasks } = await startBuildContainer(body);
 
-  // if (!tasks) {
-  //   throw new Error("No tasks found");
-  // }
+  if (!tasks) {
+    throw new Error("No tasks found");
+  }
 
-  // for (const task of tasks) {
-  //   const { taskArn } = task;
+  for (const task of tasks) {
+    const { taskArn } = task;
 
-  //   if (!taskArn) {
-  //     throw new Error("No taskArn found");
-  //   }
+    if (!taskArn) {
+      throw new Error("No taskArn found");
+    }
 
-  //   await pollBuildContainer(taskArn);
-  //   await createDeployment();
-  // }
+    await pollBuildContainer(taskArn);
+    await createDeployment(model, config.toObject());
+  }
 };
 
 async function pollBuildContainer(taskArn: string) {
@@ -123,9 +139,14 @@ async function startBuildContainer(body: ConveyMessage) {
   return data;
 }
 
-async function createDeployment() {
+async function createDeployment(model: any, config: any) {
+  if (!config) {
+    throw new Error("No config found");
+  }
+
+  const id = `dply-${config._id.toString()}`;
   const command = new CreateFunctionCommand({
-    FunctionName: "convey-test",
+    FunctionName: id,
     Role: "arn:aws:iam::332521570261:role/convey-lambda-role",
     Code: {
       ImageUri:
@@ -137,7 +158,7 @@ async function createDeployment() {
       Variables: {
         NPM_CONFIG_CACHE: "/tmp/.npm",
         AWS_LWA_READINESS_CHECK_PATH: "/health",
-        AWS_LWA_PORT: "3000",
+        AWS_LWA_PORT: config.port.toString(),
       },
     },
   });
@@ -147,7 +168,7 @@ async function createDeployment() {
   let state: string | undefined;
 
   const { Configuration } = await lambda.send(
-    new GetFunctionCommand({ FunctionName: "convey-test" })
+    new GetFunctionCommand({ FunctionName: id })
   );
 
   if (Configuration) {
@@ -156,7 +177,7 @@ async function createDeployment() {
 
   while (state !== "Active") {
     const { Configuration } = await lambda.send(
-      new GetFunctionCommand({ FunctionName: "convey-test" })
+      new GetFunctionCommand({ FunctionName: id })
     );
 
     if (Configuration) {
@@ -167,37 +188,60 @@ async function createDeployment() {
   const r = await lambda.send(
     new AddPermissionCommand({
       Action: "lambda:InvokeFunctionUrl",
-      FunctionName: "convey-test",
+      FunctionName: id,
       Principal: "*",
       StatementId: "FunctionURLAllowPublicAccess",
       FunctionUrlAuthType: "NONE",
     })
   );
 
+  console.log("creating function deployment");
+
   const c = new CreateFunctionUrlConfigCommand({
-    FunctionName: "convey-test",
+    FunctionName: id,
     AuthType: "NONE",
   });
 
   const d = await lambda.send(c);
+  try {
+    await model.findOneAndUpdate(
+      {
+        _id: config._id,
+      },
+      {
+        deploy_url: d.FunctionUrl,
+      }
+    );
+  } catch (err) {
+    console.log(err);
+  }
 
-  console.log(d.FunctionUrl);
+  console.log("function deployment created");
 }
 
-async function getDeploymentConfig(deploymentId: string) {
-  const model = await initDB();
+async function getDeploymentConfig(model: any, deploymentId: string) {
   const config = await model.findOne({
     _id: new mongo.ObjectId(deploymentId),
   });
 
-
-  return config 
+  return config;
 }
 
 async function initDB() {
   const uri =
     (process.env.MONGO_URI as string) ?? "mongodb://localhost:27017/convey";
 
-  await mongoose.connect(uri);
-  return mongoose.model("Deployment", new mongoose.Schema({}));
+  try {
+    await mongoose.connect(uri);
+  } catch (error) {
+    console.error("Error connecting to MongoDB:", error);
+  }
 }
+
+function loadMockEvent() {
+  const dataPath = path.resolve(__dirname, "../../../data/mockQEvent.json");
+  const jsonString = fs.readFileSync(dataPath, "utf8");
+  return JSON.parse(jsonString);
+}
+
+handler(loadMockEvent());
