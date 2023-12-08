@@ -11,38 +11,38 @@ import {
   AddPermissionCommand,
 } from "@aws-sdk/client-lambda";
 import { SQSEvent, Handler } from "aws-lambda";
+import mongoose, { mongo } from "mongoose";
 
 const ecs = new ECSClient({ region: "us-east-1" });
 const lambda = new LambdaClient({ region: "us-east-1" });
 
 type ConveyMessage = {
   userId: string;
-  projectPath: string;
-  ecrDestination: string;
-  port: string;
+  deploymentId: string;
+  s3Path: string;
 };
 
 export const handler: Handler<SQSEvent> = async (event) => {
-  // const { Records } = event;
+  const { Records } = event;
+  const body = JSON.parse(Records[0].body) as ConveyMessage;
 
-  // const body = JSON.parse(Records[0].body) as ConveyMessage;
+  const config = await getDeploymentConfig(body.deploymentId);
+  const { tasks } = await startBuildContainer(body);
 
-  const { tasks } = await startBuildContainer();
+  // if (!tasks) {
+  //   throw new Error("No tasks found");
+  // }
 
-  if (!tasks) {
-    throw new Error("No tasks found");
-  }
+  // for (const task of tasks) {
+  //   const { taskArn } = task;
 
-  for (const task of tasks) {
-    const { taskArn } = task;
+  //   if (!taskArn) {
+  //     throw new Error("No taskArn found");
+  //   }
 
-    if (!taskArn) {
-      throw new Error("No taskArn found");
-    }
-
-    await pollBuildContainer(taskArn);
-    await createDeployment();
-  }
+  //   await pollBuildContainer(taskArn);
+  //   await createDeployment();
+  // }
 };
 
 async function pollBuildContainer(taskArn: string) {
@@ -84,29 +84,9 @@ async function pollBuildContainer(taskArn: string) {
 
     await new Promise((resolve) => setTimeout(resolve, 200));
   } while (status !== "STOPPED");
-
-  // while (status !== "STOPPED") {
-
-  // setTimeout(async () => {
-  //   const { tasks } = await ecs.send(command);
-
-  //   if (!tasks) {
-  //     throw new Error("No tasks found");
-  //   }
-
-  //   const { containers } = tasks[0];
-
-  //   if (!containers) {
-  //     throw new Error("No containers found");
-  //   }
-
-  //   const container = containers[0];
-  //   status = container.lastStatus;
-  //  }, 1000);
-  // }
 }
 
-async function startBuildContainer() {
+async function startBuildContainer(body: ConveyMessage) {
   const command = new RunTaskCommand({
     cluster: "convey",
     taskDefinition: "ConveyCorekanikobuild70270354",
@@ -125,7 +105,7 @@ async function startBuildContainer() {
             "--verbosity",
             "trace",
             "--context",
-            "s3://convey-bucket/customer/builds/build.tar.gz",
+            body.s3Path,
             "--context-sub-path",
             "./",
             "--dockerfile",
@@ -202,4 +182,22 @@ async function createDeployment() {
   const d = await lambda.send(c);
 
   console.log(d.FunctionUrl);
+}
+
+async function getDeploymentConfig(deploymentId: string) {
+  const model = await initDB();
+  const config = await model.findOne({
+    _id: new mongo.ObjectId(deploymentId),
+  });
+
+
+  return config 
+}
+
+async function initDB() {
+  const uri =
+    (process.env.MONGO_URI as string) ?? "mongodb://localhost:27017/convey";
+
+  await mongoose.connect(uri);
+  return mongoose.model("Deployment", new mongoose.Schema({}));
 }

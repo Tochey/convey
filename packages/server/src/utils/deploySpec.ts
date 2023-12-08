@@ -30,17 +30,17 @@ phases:
   pre_build:
     commands:
       - ls
-      # - command
   build:
     commands:
+      - BUILD_ASSET_KEY=build.tar.gz
+      - S3_PATH=s3://$bucketName/customer/deployments/cus-$USER_ID/$BUILD_ASSET_KEY
       - env 
       - aws s3 cp s3://$bucketName/scripts . --recursive
       - node docker.js
-      - rm -rf docker.js
       - cd /tmp
-      - tar -C $CODEBUILD_SRC_DIR -zcvf build.tar.gz .
-      - aws s3 cp build.tar.gz s3://$bucketName/customer/builds/build.tar.gz
-      - aws sqs send-message --queue-url $queueUrl --message-body "s3://$bucketName/customer/builds/build.tar.gz"
+      - tar -C $CODEBUILD_SRC_DIR -zcvf $BUILD_ASSET_KEY .
+      - aws s3 cp $BUILD_ASSET_KEY $S3_PATH
+      - aws sqs send-message --queue-url $queueUrl --message-body "{\"userId\":\"$USER_ID\", \"deploymentId\":\"$DEPLOYMENT_ID\", \"s3Path\":\"$S3_PATH\"}"
   #post_build:
     #commands:
       # - command

@@ -3,6 +3,7 @@ import CustomError from "../utils/custom-err";
 import { DecodedToken, Request } from "../types";
 import { REFRESH_TOKEN_HEADER_KEY, X_TOKEN_HEADER_KEY } from "../constants";
 import { validateToken } from "../utils/tokens";
+import mongoose, { mongo } from "mongoose";
 
 function authenticateRequest(): Handler {
   return async (
@@ -17,7 +18,7 @@ function authenticateRequest(): Handler {
     try {
       if (accessToken && refreshToken) {
         token = await validateToken(accessToken, refreshToken, _res);
-      } else if (process.env.NODE_ENV === "dev") {
+      } else if (process.env.NODE_ENV === "development") {
         token = authenticateWithBody(req.body);
       } else {
         throw new CustomError(401, "Unauthorized");
@@ -44,7 +45,7 @@ function authenticateWithBody(body: Request["body"]): DecodedToken {
   }
 
   return {
-    id,
+    id: new mongo.ObjectId(id),
   };
 }
 

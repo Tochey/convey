@@ -17,15 +17,16 @@ const create = z.object({
   port: z.string(),
 });
 
-
 router.post(
   "/create",
   validateRequest({
     body: create,
     validationErrorMessage: VALIDATION_ERR_MESSAGE,
+
   }),
-  //   authenticateRequest(),
+  authenticateRequest(),
   asyncHandler(DeploymentController.create)
+  
 );
 
 export default router;

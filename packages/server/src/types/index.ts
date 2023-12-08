@@ -1,5 +1,6 @@
 import { InferSchemaType, Types } from "mongoose";
 import { userSchema } from "../models/schemas/user";
+import { deploymentSchema } from "../models/schemas/deployment";
 
 type ExpressRequest = import("express").Request;
 
@@ -10,8 +11,13 @@ export type IUser = Optional<
   "createdAt" | "updatedAt" // timestamps are automatically added by mongoose
 > & { _id: Types.ObjectId };
 
+export type IDeployment = Optional<
+  InferSchemaType<typeof deploymentSchema>,
+  "createdAt" | "updatedAt" // timestamps are automatically added by mongoose
+> & { _id: Types.ObjectId };
+
 export interface DecodedToken {
-  id: string;
+  id: Types.ObjectId;
 }
 
 export interface Context {

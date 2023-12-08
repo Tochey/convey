@@ -7,22 +7,24 @@ import {
 } from "@aws-sdk/client-codebuild";
 import CustomError from "../utils/custom-err";
 import { spec } from "../utils/deploySpec";
+import { Types } from "mongoose";
 
 interface DeploymentProps {
-  id: string;
+  userId : Types.ObjectId;
+  deploymentId: Types.ObjectId;
   clone_url: string;
   branch: string;
   rootDirectory: string;
   buildCommand: string;
   startCommand: string;
-  port : string
+  port: string;
 }
 
 const client = new CodeBuildClient({ region: "us-east-1" });
 
 export async function createCBDeployment(props: DeploymentProps) {
   const cpcInput = createProjectCommandInput(props);
-  const sbcInput = startBuildCommandInput(props.id);
+  const sbcInput = startBuildCommandInput(props.deploymentId);
 
   try {
     await client.send(new CreateProjectCommand(cpcInput));
@@ -36,9 +38,10 @@ export async function createCBDeployment(props: DeploymentProps) {
 function createProjectCommandInput(
   props: DeploymentProps
 ): CreateProjectCommandInput {
-  const { id, clone_url, rootDirectory, startCommand, buildCommand, port } = props;
+  const { userId, deploymentId, clone_url, rootDirectory, startCommand, buildCommand, port } =
+    props;
   return {
-    name: id,
+    name: `dply-${deploymentId}`,
     source: {
       type: "GITHUB",
       location: clone_url,
@@ -68,6 +71,14 @@ function createProjectCommandInput(
           name: "PORT",
           value: port,
         },
+        {
+          name: "DEPLOYMENT_ID",
+          value: deploymentId.toString(),
+        },
+        {
+          name: "USER_ID",
+          value: userId.toString(),
+        },
       ],
     },
     serviceRole:
@@ -77,8 +88,8 @@ function createProjectCommandInput(
   };
 }
 
-function startBuildCommandInput(id: string): StartBuildCommandInput {
+function startBuildCommandInput(id: Types.ObjectId): StartBuildCommandInput {
   return {
-    projectName: id,
+    projectName: `dply-${id}`,
   };
 }

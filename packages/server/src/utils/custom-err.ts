@@ -9,7 +9,7 @@ class CustomError extends Error {
         this.status = status ?? 500
         this.errorId = uuidv4()
 
-        if (process.env.NODE_ENV === 'dev') {
+        if (process.env.NODE_ENV === 'development') {
             this.message = String(message)
         } else {
             if (this.status >= 500) {
