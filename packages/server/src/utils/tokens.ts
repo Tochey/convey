@@ -36,6 +36,7 @@ export async function createTokens({ userId, refreshSecret }: params) {
 }
 
 async function refresh(token: string, res: Response) {
+  let userRefreshSecret: string;
   try {
     const { id } = jwt.decode(token) as DecodedToken;
 
@@ -48,11 +49,16 @@ async function refresh(token: string, res: Response) {
     if (!user) {
       throw new CustomError(401, "Unauthorized");
     }
+    try {
+      // for non oath users
+      userRefreshSecret =
+        (process.env.JWT_REFRESH_SECRET as string) + user.password;
 
-    const userRefreshSecret =
-      (process.env.JWT_REFRESH_SECRET as string) + user.password;
-
-    jwt.verify(token, userRefreshSecret);
+      jwt.verify(token, userRefreshSecret);
+    } catch (err) {
+      userRefreshSecret = process.env.JWT_REFRESH_SECRET as string;
+      jwt.verify(token, userRefreshSecret);
+    }
 
     const [accessToken, refreshToken] = await createTokens({
       userId: user._id,

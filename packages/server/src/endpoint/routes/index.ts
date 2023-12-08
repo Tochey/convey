@@ -1,9 +1,11 @@
 import { Response } from "express";
 import auth from "./auth";
 import deployment from "./deployment";
+import oauth from "./oauth";
 
 const API_ROUTES = {
   "/auth": auth,
+  "/oauth": oauth ,
   "/deployment": deployment,
 };
 

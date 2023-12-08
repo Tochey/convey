@@ -37,7 +37,7 @@ export async function login(req: Request) {
   const user = await User.findOne({ email });
 
   if (!user || !user.password) {
-    // github users don't have passwords
+    // oauth users don't have passwords
     throw new CustomError(401, "Invalid Credentials");
   }
 

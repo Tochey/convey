@@ -6,8 +6,11 @@ services:
     restart: on-failure
     volumes:
       - mongo:/data/db
+      - ~/.aws:/root/.aws:ro
     command: mongod --noauth
     ports:
       - 27017:27017
+    environment:
+      - AWS_PROFILE=convey
 volumes:
   mongo:
