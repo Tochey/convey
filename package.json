@@ -17,15 +17,13 @@
     "packages/*"
   ],
   "devDependencies": {
-    "@types/bcrypt": "^5.0.2",
-    "@types/node": "^20.10.3",
-    "@types/passport": "^1.0.16",
     "cross-env": "^7.0.3"
   },
   "dependencies": {
     "@aws-sdk/client-ecs": "^3.465.0",
     "@aws-sdk/client-lambda": "^3.465.0",
     "@aws-sdk/client-s3": "^3.465.0",
+    "@convey/shared": "^1.0.0",
     "concurrently": "^8.2.2"
   }
 }

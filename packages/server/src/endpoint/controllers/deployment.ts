@@ -1,10 +1,10 @@
 import { CustomResponse } from "../../utils/custom-res";
-import { IDeployment, Request } from "../../types";
+import {  Request } from "../../types";
 import { Github } from "../../lib/github";
 import CustomError from "../../utils/custom-err";
 import { createCBDeployment } from "../../lib/codebuild";
 import * as UserDAL from "../../dal/user";
-import { Deployment } from "../../models/Deployment";
+import { Deployment, IDeployment } from "@convey/shared";
 
 export async function create(req: Request) {
   const { id } = req.ctx.decodedToken;

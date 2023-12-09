@@ -6,11 +6,12 @@ import {
   StartBuildCommandInput,
 } from "@aws-sdk/client-codebuild";
 import CustomError from "../utils/custom-err";
-import { spec } from "../utils/deploySpec";
+import { spec } from "../utils/deploy-spec";
 import { Types } from "mongoose";
+import { ConveyQueueMessage } from "@convey/shared";
 
 interface DeploymentProps {
-  userId : Types.ObjectId;
+  userId: Types.ObjectId;
   deploymentId: Types.ObjectId;
   clone_url: string;
   branch: string;
@@ -35,16 +36,13 @@ export async function createCBDeployment(props: DeploymentProps) {
   }
 }
 
-function createProjectCommandInput(
-  props: DeploymentProps
-): CreateProjectCommandInput {
-  const { userId, deploymentId, clone_url, rootDirectory, startCommand, buildCommand, port } =
-    props;
+function createProjectCommandInput(props: DeploymentProps): CreateProjectCommandInput {
+  const env = buildEnvironmentVariables(props);
   return {
-    name: `dply-${deploymentId}`,
+    name: `dply-${props.deploymentId}`,
     source: {
       type: "GITHUB",
-      location: clone_url,
+      location: props.clone_url,
       buildspec: spec,
     },
     artifacts: {
@@ -54,32 +52,7 @@ function createProjectCommandInput(
       type: "LINUX_LAMBDA_CONTAINER",
       computeType: "BUILD_LAMBDA_4GB",
       image: "aws/codebuild/amazonlinux-x86_64-lambda-standard:nodejs18",
-      environmentVariables: [
-        {
-          name: "ROOT_DIRECTORY",
-          value: rootDirectory,
-        },
-        {
-          name: "START_COMMAND",
-          value: startCommand,
-        },
-        {
-          name: "BUILD_COMMAND",
-          value: buildCommand,
-        },
-        {
-          name: "PORT",
-          value: port,
-        },
-        {
-          name: "DEPLOYMENT_ID",
-          value: deploymentId.toString(),
-        },
-        {
-          name: "USER_ID",
-          value: userId.toString(),
-        },
-      ],
+      environmentVariables: env,
     },
     serviceRole:
       process.env.NODE_ENV === "production"
@@ -93,3 +66,42 @@ function startBuildCommandInput(id: Types.ObjectId): StartBuildCommandInput {
     projectName: `dply-${id}`,
   };
 }
+
+function buildEnvironmentVariables(props: DeploymentProps) {
+  const {
+    userId,
+    deploymentId,
+    rootDirectory,
+    startCommand,
+    buildCommand,
+    port,
+  } = props;
+  
+  return [
+    {
+      name: "ROOT_DIRECTORY",
+      value: rootDirectory,
+    },
+    {
+      name: "START_COMMAND",
+      value: startCommand,
+    },
+    {
+      name: "BUILD_COMMAND",
+      value: buildCommand,
+    },
+    {
+      name: "PORT",
+      value: port,
+    },
+    {
+      name: "DEPLOYMENT_ID",
+      value: deploymentId.toString(),
+    },
+    {
+      name: "USER_ID",
+      value: userId.toString(),
+    },
+  ];
+}
+

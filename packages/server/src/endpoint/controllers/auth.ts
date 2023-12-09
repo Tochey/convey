@@ -1,7 +1,7 @@
 // https://auth0.com/blog/refresh-tokens-what-are-they-and-when-to-use-them/
 // https://stackoverflow.com/questions/3487991/why-does-oauth-v2-have-both-access-and-refresh-tokens
 
-import { User } from "../../models/User";
+import { User } from "@convey/shared"
 import { Request } from "../../types";
 import { CustomResponse } from "../../utils/custom-res";
 import bcrypt from "bcrypt";

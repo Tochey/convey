@@ -11,14 +11,16 @@ import {
   AddPermissionCommand,
 } from "@aws-sdk/client-lambda";
 import { SQSEvent, Handler } from "aws-lambda";
-import mongoose, { mongo } from "mongoose";
+import mongoose from "mongoose";
 import fs from "fs";
 import path from "path";
+import { Deployment } from "@convey/shared";
+import { connect } from "./connect";
 
 const ecs = new ECSClient({ region: "us-east-1" });
 const lambda = new LambdaClient({ region: "us-east-1" });
 
-type ConveyMessage = {
+type ConveyQueueMessage = {
   userId: string;
   deploymentId: string;
   s3Path: string;
@@ -26,38 +28,22 @@ type ConveyMessage = {
 
 export const handler = async (event: SQSEvent) => {
   const { Records } = event;
-  const body = JSON.parse(Records[0].body) as ConveyMessage;
-  await initDB();
-  const model = mongoose.model(
-    "Deployment",
-    new mongoose.Schema({
-      user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-      github_url: String,
-      branch: String,
-      buildCommand: String,
-      startCommand: String,
-      rootDirectory: String,
-      port: Number,
-      deploy_url: String,
-    })
-  );
+  const body = JSON.parse(Records[0].body) as ConveyQueueMessage;
 
-  const config = await getDeploymentConfig(model, body.deploymentId);
+  await connect();
+  const config = await getDeploymentConfig(body.deploymentId);
   const { tasks } = await startBuildContainer(body);
 
   if (!tasks) {
     throw new Error("No tasks found");
   }
-
   for (const task of tasks) {
     const { taskArn } = task;
-
     if (!taskArn) {
       throw new Error("No taskArn found");
     }
-
     await pollBuildContainer(taskArn);
-    await createDeployment(model, config.toObject());
+    await createDeployment(config.toObject());
   }
 };
 
@@ -102,7 +88,7 @@ async function pollBuildContainer(taskArn: string) {
   } while (status !== "STOPPED");
 }
 
-async function startBuildContainer(body: ConveyMessage) {
+async function startBuildContainer(body: ConveyQueueMessage) {
   const command = new RunTaskCommand({
     cluster: "convey",
     taskDefinition: "ConveyCorekanikobuild70270354",
@@ -139,7 +125,7 @@ async function startBuildContainer(body: ConveyMessage) {
   return data;
 }
 
-async function createDeployment(model: any, config: any) {
+async function createDeployment(config: any) {
   if (!config) {
     throw new Error("No config found");
   }
@@ -204,7 +190,7 @@ async function createDeployment(model: any, config: any) {
 
   const d = await lambda.send(c);
   try {
-    await model.findOneAndUpdate(
+    await Deployment.findOneAndUpdate(
       {
         _id: config._id,
       },
@@ -219,23 +205,17 @@ async function createDeployment(model: any, config: any) {
   console.log("function deployment created");
 }
 
-async function getDeploymentConfig(model: any, deploymentId: string) {
-  const config = await model.findOne({
-    _id: new mongo.ObjectId(deploymentId),
-  });
+async function getDeploymentConfig(deploymentId: string) {
+  const config = await Deployment.findById(
+    new mongoose.Types.ObjectId(deploymentId)
+  );
+
+  if (!config) {
+    throw new Error("No config found");
+  }
+  console.log(config);
 
   return config;
-}
-
-async function initDB() {
-  const uri =
-    (process.env.MONGO_URI as string) ?? "mongodb://localhost:27017/convey";
-
-  try {
-    await mongoose.connect(uri);
-  } catch (error) {
-    console.error("Error connecting to MongoDB:", error);
-  }
 }
 
 function loadMockEvent() {

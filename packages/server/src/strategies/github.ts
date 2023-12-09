@@ -1,5 +1,5 @@
 import GitHubStrategy from "passport-github2";
-import { User } from "../models/User";
+import { User } from "@convey/shared";
 import "dotenv/config";
 
 const githubLogin = async (

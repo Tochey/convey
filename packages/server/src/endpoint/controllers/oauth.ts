@@ -1,7 +1,8 @@
 import { REFRESH_TOKEN_HEADER_KEY, X_TOKEN_HEADER_KEY } from "../../constants";
 import { CustomResponse } from "../../utils/custom-res";
 import { createTokens } from "../../utils/tokens";
-import { IUser, Request } from "../../types";
+import { Request } from "../../types";
+import { IUser } from "@convey/shared";
 
 export async function setHeaders(req: Request) {
   const { user } = req;
