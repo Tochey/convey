@@ -1,5 +1,5 @@
 import { CustomResponse } from "../../utils/custom-res";
-import {  Request } from "../../types";
+import { Request } from "../../types";
 import { Github } from "../../lib/github";
 import CustomError from "../../utils/custom-err";
 import { createCBDeployment } from "../../lib/codebuild";
@@ -33,7 +33,7 @@ export async function create(req: Request) {
     data: { clone_url },
   } = info;
 
-  const deployment: IDeployment = await Deployment.create({
+  const deployment : IDeployment = await Deployment.create({
     user: user._id,
     github_url: clone_url,
     branch,
@@ -43,16 +43,7 @@ export async function create(req: Request) {
     port,
   });
 
-  await createCBDeployment({
-    userId : user._id,
-    deploymentId: deployment._id,
-    clone_url,
-    branch,
-    rootDirectory,
-    buildCommand,
-    startCommand,
-    port,
-  });
+  await createCBDeployment(deployment);
 
   return new CustomResponse("Deployment Queued", deployment, 201);
 }

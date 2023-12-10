@@ -2,7 +2,9 @@ import mongoose from "mongoose";
 
 let conn: Promise<typeof mongoose> | null = null;
 const uri =
-  (process.env.MONGO_URI as string) ?? "mongodb://localhost:27017/convey";
+  process.env.NODE_ENV === "production"
+    ? (process.env.MONGO_URI as string)
+    : "mongodb://localhost:27017/convey";
 
 export async function connect() {
   if (conn == null) {

@@ -1,6 +1,6 @@
 import jwt from "jsonwebtoken";
 import { Types } from "mongoose";
-import { User } from "../models/User";
+import { User } from "@convey/shared";
 import CustomError from "./custom-err";
 import { DecodedToken } from "../types";
 import { Response } from "express";

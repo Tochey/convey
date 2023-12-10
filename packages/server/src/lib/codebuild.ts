@@ -8,24 +8,20 @@ import {
 import CustomError from "../utils/custom-err";
 import { spec } from "../utils/deploy-spec";
 import { Types } from "mongoose";
-import { ConveyQueueMessage } from "@convey/shared";
+import { DEPLOYMENT_PREFIX, IDeployment } from "@convey/shared";
+import { loadParams } from "./load-params";
+import { CODEBUILD_CONFIG } from "../constants";
 
-interface DeploymentProps {
-  userId: Types.ObjectId;
-  deploymentId: Types.ObjectId;
-  clone_url: string;
-  branch: string;
-  rootDirectory: string;
-  buildCommand: string;
-  startCommand: string;
-  port: string;
-}
+type env = Array<{
+  name: "DEPLOYMENT" | "BUCKET_NAME" | "QUEUE_URL";
+  value: string;
+}>;
 
 const client = new CodeBuildClient({ region: "us-east-1" });
 
-export async function createCBDeployment(props: DeploymentProps) {
-  const cpcInput = createProjectCommandInput(props);
-  const sbcInput = startBuildCommandInput(props.deploymentId);
+export async function createCBDeployment(props: IDeployment) {
+  const cpcInput = await createProjectCommandInput(props);
+  const sbcInput = startBuildCommandInput(props._id);
 
   try {
     await client.send(new CreateProjectCommand(cpcInput));
@@ -36,13 +32,15 @@ export async function createCBDeployment(props: DeploymentProps) {
   }
 }
 
-function createProjectCommandInput(props: DeploymentProps): CreateProjectCommandInput {
-  const env = buildEnvironmentVariables(props);
+async function createProjectCommandInput(
+  props: IDeployment
+): Promise<CreateProjectCommandInput> {
+  const env = await buildEnvironmentVariables(props);
   return {
-    name: `dply-${props.deploymentId}`,
+    name: `${DEPLOYMENT_PREFIX}${props._id}`,
     source: {
       type: "GITHUB",
-      location: props.clone_url,
+      location: props.github_url,
       buildspec: spec,
     },
     artifacts: {
@@ -50,8 +48,8 @@ function createProjectCommandInput(props: DeploymentProps): CreateProjectCommand
     },
     environment: {
       type: "LINUX_LAMBDA_CONTAINER",
-      computeType: "BUILD_LAMBDA_4GB",
-      image: "aws/codebuild/amazonlinux-x86_64-lambda-standard:nodejs18",
+      computeType: CODEBUILD_CONFIG.compute,
+      image: CODEBUILD_CONFIG.image,
       environmentVariables: env,
     },
     serviceRole:
@@ -63,45 +61,25 @@ function createProjectCommandInput(props: DeploymentProps): CreateProjectCommand
 
 function startBuildCommandInput(id: Types.ObjectId): StartBuildCommandInput {
   return {
-    projectName: `dply-${id}`,
+    projectName: `${DEPLOYMENT_PREFIX}${id}`,
   };
 }
 
-function buildEnvironmentVariables(props: DeploymentProps) {
-  const {
-    userId,
-    deploymentId,
-    rootDirectory,
-    startCommand,
-    buildCommand,
-    port,
-  } = props;
-  
+async function buildEnvironmentVariables(props: IDeployment): Promise<env> {
+  const { bucketName, queueUrl } = await loadParams();
+
   return [
     {
-      name: "ROOT_DIRECTORY",
-      value: rootDirectory,
+      name: "DEPLOYMENT",
+      value: JSON.stringify(props),
     },
     {
-      name: "START_COMMAND",
-      value: startCommand,
+      name: "QUEUE_URL",
+      value: queueUrl,
     },
     {
-      name: "BUILD_COMMAND",
-      value: buildCommand,
-    },
-    {
-      name: "PORT",
-      value: port,
-    },
-    {
-      name: "DEPLOYMENT_ID",
-      value: deploymentId.toString(),
-    },
-    {
-      name: "USER_ID",
-      value: userId.toString(),
+      name: "BUCKET_NAME",
+      value: bucketName,
     },
   ];
 }
-

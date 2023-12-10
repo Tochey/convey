@@ -1,24 +1,22 @@
 import {
-  ECSClient,
-  RunTaskCommand,
-  DescribeTasksCommand,
-} from "@aws-sdk/client-ecs";
-import {
   LambdaClient,
   CreateFunctionCommand,
   GetFunctionCommand,
   CreateFunctionUrlConfigCommand,
   AddPermissionCommand,
 } from "@aws-sdk/client-lambda";
-import { SQSEvent, Handler } from "aws-lambda";
-import mongoose from "mongoose";
-import fs from "fs";
-import path from "path";
-import { Deployment } from "@convey/shared";
+import {
+  ECSClient,
+  RunTaskCommand,
+  DescribeTasksCommand,
+} from "@aws-sdk/client-ecs";
+import { SQSEvent } from "aws-lambda";
+import { DEPLOYMENT_PREFIX, Deployment } from "@convey/shared";
 import { connect } from "./connect";
 
-const ecs = new ECSClient({ region: "us-east-1" });
-const lambda = new LambdaClient({ region: "us-east-1" });
+const region = "us-east-1";
+const ecs = new ECSClient({ region });
+const lambda = new LambdaClient({ region });
 
 type ConveyQueueMessage = {
   userId: string;
@@ -29,63 +27,32 @@ type ConveyQueueMessage = {
 export const handler = async (event: SQSEvent) => {
   const { Records } = event;
   const body = JSON.parse(Records[0].body) as ConveyQueueMessage;
-
   await connect();
+
   const config = await getDeploymentConfig(body.deploymentId);
   const { tasks } = await startBuildContainer(body);
 
-  if (!tasks) {
-    throw new Error("No tasks found");
-  }
+  if (!tasks) throw new Error("No tasks found");
+
   for (const task of tasks) {
     const { taskArn } = task;
-    if (!taskArn) {
-      throw new Error("No taskArn found");
-    }
+    if (!taskArn) throw new Error("No taskArn found");
     await pollBuildContainer(taskArn);
     await createDeployment(config.toObject());
   }
 };
 
 async function pollBuildContainer(taskArn: string) {
-  const input = {
-    cluster: "convey",
-    tasks: [taskArn],
-  };
-
+  const input = { cluster: "convey", tasks: [taskArn] };
   const command = new DescribeTasksCommand(input);
-  const data = await ecs.send(command);
-
-  if (!data.tasks) {
-    throw new Error("No tasks found");
-  }
-
-  const { containers } = data.tasks[0];
-
-  if (!containers) {
-    throw new Error("No containers found");
-  }
-
-  let status = containers[0].lastStatus;
+  let data;
 
   do {
-    const { tasks } = await ecs.send(command);
-
-    if (!tasks) {
-      throw new Error("No tasks found");
-    }
-
-    const { containers } = tasks[0];
-
-    if (!containers) {
-      throw new Error("No containers found");
-    }
-
-    const container = containers[0];
-    status = container.lastStatus;
-
+    data = await ecs.send(command);
+    if (!data.tasks || !data.tasks[0].containers)
+      throw new Error("No tasks or containers found");
     await new Promise((resolve) => setTimeout(resolve, 200));
-  } while (status !== "STOPPED");
+  } while (data.tasks[0].containers[0].lastStatus !== "STOPPED");
 }
 
 async function startBuildContainer(body: ConveyQueueMessage) {
@@ -121,16 +88,13 @@ async function startBuildContainer(body: ConveyQueueMessage) {
     },
   });
   const data = await ecs.send(command);
-
   return data;
 }
 
 async function createDeployment(config: any) {
-  if (!config) {
-    throw new Error("No config found");
-  }
+  if (!config) throw new Error("No config found");
 
-  const id = `dply-${config._id.toString()}`;
+  const id = `${DEPLOYMENT_PREFIX}${config._id.toString()}`;
   const command = new CreateFunctionCommand({
     FunctionName: id,
     Role: "arn:aws:iam::332521570261:role/convey-lambda-role",
@@ -149,29 +113,24 @@ async function createDeployment(config: any) {
     },
   });
 
-  const data = await lambda.send(command);
+  await lambda.send(command);
+  await waitForFunctionToBeActive(id);
+  await addPublicAccessPermission(id);
+  await createFunctionDeployment(id, config);
+}
 
+async function waitForFunctionToBeActive(id: string) {
   let state: string | undefined;
-
-  const { Configuration } = await lambda.send(
-    new GetFunctionCommand({ FunctionName: id })
-  );
-
-  if (Configuration) {
-    state = Configuration.State;
-  }
-
-  while (state !== "Active") {
+  do {
     const { Configuration } = await lambda.send(
       new GetFunctionCommand({ FunctionName: id })
     );
+    if (Configuration) state = Configuration.State;
+  } while (state !== "Active");
+}
 
-    if (Configuration) {
-      state = Configuration.State;
-    }
-  }
-
-  const r = await lambda.send(
+async function addPublicAccessPermission(id: string) {
+  await lambda.send(
     new AddPermissionCommand({
       Action: "lambda:InvokeFunctionUrl",
       FunctionName: id,
@@ -180,48 +139,32 @@ async function createDeployment(config: any) {
       FunctionUrlAuthType: "NONE",
     })
   );
+}
 
-  console.log("creating function deployment");
-
+async function createFunctionDeployment(id: string, config: any) {
   const c = new CreateFunctionUrlConfigCommand({
     FunctionName: id,
     AuthType: "NONE",
   });
-
   const d = await lambda.send(c);
   try {
     await Deployment.findOneAndUpdate(
-      {
-        _id: config._id,
-      },
-      {
-        deploy_url: d.FunctionUrl,
-      }
+      { _id: config._id },
+      { deploy_url: d.FunctionUrl }
     );
   } catch (err) {
     console.log(err);
   }
-
-  console.log("function deployment created");
 }
 
 async function getDeploymentConfig(deploymentId: string) {
-  const config = await Deployment.findById(
-    new mongoose.Types.ObjectId(deploymentId)
-  );
-
-  if (!config) {
-    throw new Error("No config found");
-  }
-  console.log(config);
-
+  const config = await Deployment.findById(deploymentId);
+  if (!config) throw new Error("No config found");
   return config;
 }
 
-function loadMockEvent() {
-  const dataPath = path.resolve(__dirname, "../../../data/mockQEvent.json");
-  const jsonString = fs.readFileSync(dataPath, "utf8");
-  return JSON.parse(jsonString);
-}
-
-handler(loadMockEvent());
+// function loadMockEvent() {
+//   const dataPath = path.resolve(__dirname, "../../../data/mockQEvent.json");
+//   const jsonString = fs.readFileSync(dataPath, "utf8");
+//   return JSON.parse(jsonString);
+// }

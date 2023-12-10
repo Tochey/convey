@@ -9,7 +9,7 @@ import { NodejsFunction } from "aws-cdk-lib/aws-lambda-nodejs";
 import { Runtime } from "aws-cdk-lib/aws-lambda";
 import { SqsEventSource } from "aws-cdk-lib/aws-lambda-event-sources";
 import * as ssm from "aws-cdk-lib/aws-ssm";
-
+import * as secrets from "aws-cdk-lib/aws-secretsmanager";
 export class Core extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
@@ -18,6 +18,12 @@ export class Core extends cdk.Stack {
       bucketName: "convey-bucket",
       removalPolicy: cdk.RemovalPolicy.DESTROY,
     });
+
+    const MONGO_URI = secrets.Secret.fromSecretNameV2(
+      this,
+      "convey-mongo",
+      "convey/app/db"
+    );
 
     new s3deploy.BucketDeployment(this, "scripts", {
       sources: [s3deploy.Source.asset("../../packages/server/src/scripts/")],
@@ -46,7 +52,7 @@ export class Core extends cdk.Stack {
 
     const queue = new sqs.Queue(this, "queue", {
       queueName: "convey-queue",
-      visibilityTimeout: cdk.Duration.minutes(30),
+      visibilityTimeout: cdk.Duration.minutes(3),
       deadLetterQueue: {
         maxReceiveCount: 1,
         queue: dlq,
@@ -61,8 +67,12 @@ export class Core extends cdk.Stack {
       runtime: Runtime.NODEJS_18_X,
       projectRoot: "../../",
       role: lambdaExecutionRole,
-      timeout: cdk.Duration.seconds(900),
+      timeout: cdk.Duration.minutes(5),
       retryAttempts: 0,
+      environment: {
+        MONGO_URI: MONGO_URI.secretValueFromJson("URI").unsafeUnwrap(), //TODO: fix this
+        NODE_ENV: "production",
+      },
     });
 
     worker.addEventSource(

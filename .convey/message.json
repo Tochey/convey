@@ -1,0 +1,18 @@
+{
+    "Records": [
+      {
+        "messageId": "d4b96831-e524-44b0-8bac-bae9320d2600",
+        "receiptHandle": "AQEBUL3hqRoNPCFT0wTFQ6q4m1Nrw5eVlk40AXTai+Elj3b7FQu2Uncv4NwBcupMZGJP/qho6+AIQ3uvhyfIbazeU8MmZmuowc1vF0VZDmlqCh0S0/5U6uvfJtWs4FoPyik4vXlSG+RtV27pODH9J9IfpDlr21IsPw/x9BvAkoSruapOTV21LSXxzL6nAc27GY4t0OM/YuTi07s+I5n6d+EIsmV3sPdbZo58HTWRMN5fb4vsDfLkr2q5xvJxLEWD/NIp3aMaFYXloK2sXxEDVUNAY0k8CJwGUMbFJaOOhbHfjp6zlF3FgogS5fuY57XrgRC+KfOp/yTx8jFt1fX/I2Zh+XbMhYLANC3+2ogbUQ7yr5lG4jXFgTwqBMEI0g3/1niJbXQrd7t1mriDdIcixwFCMw==",
+        "body": "{\"userId\":\"6572afabb2796e1ebdea1f77\",\"deploymentId\":\"65739e27000f172fc9adb482\",\"s3Path\":\"s3://convey-bucket/customer/deployments/cus-6572afabb2796e1ebdea1f77/build.tar.gz\"}",
+        "attributes": {
+          "someAttributeKey": "someAttributeValue"
+        },
+        "messageAttributes": {},
+        "md5OfBody": "bf646c94f221882d2c5c0b3fdb5756e1",
+        "eventSource": "aws:sqs",
+        "eventSourceARN": "arn:aws:sqs:us-east-1:332521570261:convey-queue",
+        "awsRegion": "us-east-1"
+      }
+    ]
+  }
+  

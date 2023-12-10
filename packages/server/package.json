@@ -19,6 +19,7 @@
   },
   "dependencies": {
     "@aws-sdk/client-codebuild": "^3.462.0",
+    "@aws-sdk/client-ssm": "^3.470.0",
     "@convey/shared": "^1.0.0",
     "@octokit/core": "^5.0.2",
     "bcrypt": "^5.1.1",
