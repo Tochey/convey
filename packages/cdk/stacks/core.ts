@@ -22,7 +22,7 @@ export class Core extends cdk.Stack {
     const MONGO_URI = secrets.Secret.fromSecretNameV2(
       this,
       "convey-mongo",
-      "convey/app/db"
+      "convey/app/db",
     );
 
     new s3deploy.BucketDeployment(this, "scripts", {
@@ -78,7 +78,7 @@ export class Core extends cdk.Stack {
     worker.addEventSource(
       new SqsEventSource(queue, {
         batchSize: 1,
-      })
+      }),
     );
 
     //TODO: create vpc and subnet configuration
@@ -105,7 +105,7 @@ export class Core extends cdk.Stack {
           "ecr:BatchCheckLayerAvailability",
         ],
         resources: ["*"],
-      })
+      }),
     );
 
     const svc = new ecs.FargateService(this, "convey-service", {
@@ -121,17 +121,6 @@ export class Core extends cdk.Stack {
       logging: new ecs.AwsLogDriver({
         streamPrefix: "kaniko",
       }),
-      command: [
-        "--context",
-        "${CONTEXT}",
-        "--context-sub-path",
-        "./api",
-        "--dockerfile",
-        "Dockerfile.v3",
-        "--destination",
-        "public.ecr.aws/v2p4u2r4/testsfsdf",
-        "--force",
-      ],
       environment: {
         AWS_SDK_LOAD_CONFIG: "true",
       },

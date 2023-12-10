@@ -9,7 +9,9 @@
     "backend": "cross-env NODE_ENV=production node packages/server/build/index.js",
     "backend:build": "tsc --build packages/server/tsconfig.json",
     "backend:dev": " concurrently --kill-others \"cross-env NODE_ENV=development AWS_PROFILE=convey nodemon --exec ts-node packages/server/src/index.ts\" \"docker-compose up\" ",
-    "worker:dev": "cross-env NODE_ENV=development AWS_PROFILE=convey ts-node packages/cdk/src/functions/worker/index.ts"
+    "worker:dev": "cross-env NODE_ENV=development AWS_PROFILE=convey ts-node packages/cdk/src/functions/worker/index.ts",
+    "format:check": "prettier --check .",
+    "format": "prettier --write . --list-different"
   },
   "author": "",
   "license": "ISC",
@@ -17,7 +19,8 @@
     "packages/*"
   ],
   "devDependencies": {
-    "cross-env": "^7.0.3"
+    "cross-env": "^7.0.3",
+    "prettier": "3.1.1"
   },
   "dependencies": {
     "@aws-sdk/client-ecs": "^3.465.0",

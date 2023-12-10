@@ -7,7 +7,13 @@ export class CustomResponse {
   headers?: {};
   redirect?: string;
 
-  constructor(message?: string, data?: any, status = 200, headers?: {}, redirect?: string) {
+  constructor(
+    message?: string,
+    data?: any,
+    status = 200,
+    headers?: {},
+    redirect?: string,
+  ) {
     this.message = message ?? "ok";
     this.data = data ?? undefined;
     this.status = status;
@@ -18,11 +24,11 @@ export class CustomResponse {
 
 export function handleCustomResponse(
   customResponse: CustomResponse,
-  res: Response
+  res: Response,
 ): void {
- if (customResponse.redirect) {
+  if (customResponse.redirect) {
     res.redirect(customResponse.redirect);
-    return
+    return;
   }
 
   const { message, data, status, headers } = customResponse;
@@ -33,5 +39,4 @@ export function handleCustomResponse(
   //@ts-ignore
   res.customResponse = message;
   res.json({ message, data });
-
 }

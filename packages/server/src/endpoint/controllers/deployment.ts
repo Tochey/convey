@@ -8,17 +8,10 @@ import { Deployment, IDeployment } from "@convey/shared";
 
 export async function create(req: Request) {
   const { id } = req.ctx.decodedToken;
-
   const { url, branch, buildCommand, startCommand, rootDirectory, port } =
     req.body;
 
   const user = await UserDAL.getUser(id);
-
-  const res = parseInt(port, 10);
-
-  if (isNaN(res)) {
-    throw new CustomError(400, "Port must be a number");
-  }
 
   const gh = new Github(url);
   let info: Awaited<ReturnType<typeof gh.validate>>;
@@ -33,7 +26,7 @@ export async function create(req: Request) {
     data: { clone_url },
   } = info;
 
-  const deployment : IDeployment = await Deployment.create({
+  const deployment: IDeployment = await Deployment.create({
     user: user._id,
     github_url: clone_url,
     branch,

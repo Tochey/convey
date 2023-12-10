@@ -48,5 +48,5 @@ export const deploymentSchema = new Schema(
       type: String,
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );

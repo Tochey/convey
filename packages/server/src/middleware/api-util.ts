@@ -4,15 +4,12 @@ import { ZodError, ZodTypeAny } from "zod";
 import CustomError from "../utils/custom-err";
 import { Request } from "../types";
 
-type AsyncHandler = (
-  req: Request,
-  res?: Response
-) => Promise<CustomResponse>;
+type AsyncHandler = (req: Request, res?: Response) => Promise<CustomResponse>;
 
 const emptyMiddleware = (
   _req: Request,
   _res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): void => next();
 
 /**
@@ -23,11 +20,7 @@ const emptyMiddleware = (
  */
 
 function asyncHandler(handler: AsyncHandler): RequestHandler {
-  return async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ) => {
+  return async (req: Request, res: Response, next: NextFunction) => {
     try {
       const handlerData = await handler(req, res);
       return handleCustomResponse(handlerData, res);
@@ -54,8 +47,8 @@ function validateRequest(validationSchema: ValidationSchema): RequestHandler {
   const { validationErrorMessage } = validationSchema;
   const normalizedValidationSchema = Object.fromEntries(
     Object.entries(validationSchema).filter(
-      ([key]) => key !== "validationErrorMessage"      
-    )
+      ([key]) => key !== "validationErrorMessage",
+    ),
   );
 
   return (req, res, next) => {
@@ -78,7 +71,7 @@ function validateRequest(validationSchema: ValidationSchema): RequestHandler {
 
 function useInProduction(middlewares: RequestHandler[]): RequestHandler[] {
   return middlewares.map((middleware) =>
-    process.env.NODE_ENV === "dev" ? emptyMiddleware : middleware
+    process.env.NODE_ENV === "dev" ? emptyMiddleware : middleware,
   );
 }
 

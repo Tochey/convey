@@ -6,7 +6,7 @@ const githubLogin = async (
   accessToken: string,
   refreshToken: string,
   profile: any,
-  cb: Function
+  cb: Function,
 ) => {
   const { emails, id, displayName } = profile;
 
@@ -40,6 +40,6 @@ export function github(): GitHubStrategy {
       proxy: false,
       scope: ["user:email"],
     },
-    githubLogin
+    githubLogin,
   );
 }

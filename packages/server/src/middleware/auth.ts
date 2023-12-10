@@ -3,13 +3,13 @@ import CustomError from "../utils/custom-err";
 import { DecodedToken, Request } from "../types";
 import { REFRESH_TOKEN_HEADER_KEY, X_TOKEN_HEADER_KEY } from "../constants";
 import { validateToken } from "../utils/tokens";
-import mongoose, { mongo } from "mongoose";
+import mongoose from "mongoose";
 
 function authenticateRequest(): Handler {
   return async (
     req: Request,
     _res: Response,
-    next: NextFunction
+    next: NextFunction,
   ): Promise<void> => {
     let token: DecodedToken;
     const headers = req.headers;
@@ -40,12 +40,12 @@ function authenticateWithBody(body: Request["body"]): DecodedToken {
   if (!id) {
     throw new CustomError(
       401,
-      "Running authorization in dev mode but still no id was provided"
+      "Running authorization in dev mode but still no id was provided",
     );
   }
 
   return {
-    id: new mongo.ObjectId(id),
+    id: new mongoose.Types.ObjectId(id),
   };
 }
 

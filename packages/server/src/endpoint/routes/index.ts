@@ -5,7 +5,7 @@ import oauth from "./oauth";
 
 const API_ROUTES = {
   "/auth": auth,
-  "/oauth": oauth ,
+  "/oauth": oauth,
   "/deployment": deployment,
 };
 

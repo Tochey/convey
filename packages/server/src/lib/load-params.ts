@@ -13,7 +13,7 @@ export async function loadParams() {
       Path: "/convey",
       Recursive: true,
       WithDecryption: true,
-    })
+    }),
   );
 
   if (!Parameters) {

@@ -71,8 +71,6 @@ async function startBuildContainer(body: ConveyQueueMessage) {
         {
           name: "kaniko",
           command: [
-            "--verbosity",
-            "trace",
             "--context",
             body.s3Path,
             "--context-sub-path",
@@ -123,7 +121,7 @@ async function waitForFunctionToBeActive(id: string) {
   let state: string | undefined;
   do {
     const { Configuration } = await lambda.send(
-      new GetFunctionCommand({ FunctionName: id })
+      new GetFunctionCommand({ FunctionName: id }),
     );
     if (Configuration) state = Configuration.State;
   } while (state !== "Active");
@@ -137,7 +135,7 @@ async function addPublicAccessPermission(id: string) {
       Principal: "*",
       StatementId: "FunctionURLAllowPublicAccess",
       FunctionUrlAuthType: "NONE",
-    })
+    }),
   );
 }
 
@@ -150,7 +148,7 @@ async function createFunctionDeployment(id: string, config: any) {
   try {
     await Deployment.findOneAndUpdate(
       { _id: config._id },
-      { deploy_url: d.FunctionUrl }
+      { deploy_url: d.FunctionUrl },
     );
   } catch (err) {
     console.log(err);

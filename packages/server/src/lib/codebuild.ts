@@ -33,7 +33,7 @@ export async function createCBDeployment(props: IDeployment) {
 }
 
 async function createProjectCommandInput(
-  props: IDeployment
+  props: IDeployment,
 ): Promise<CreateProjectCommandInput> {
   const env = await buildEnvironmentVariables(props);
   return {

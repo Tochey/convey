@@ -6,7 +6,6 @@ import * as secrets from "aws-cdk-lib/aws-secretsmanager";
 
 const app = new cdk.App();
 
-
 new Core(app, "ConveyCore", {
   env: {
     account: "332521570261",

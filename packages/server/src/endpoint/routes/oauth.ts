@@ -15,7 +15,7 @@ router.get(
   passport.authenticate("github", {
     scope: ["user:email", "read:user"],
     session: false,
-  })
+  }),
 );
 
 router.get(
@@ -26,9 +26,7 @@ router.get(
     session: false,
     scope: ["user:email", "read:user"],
   }),
-  asyncHandler(
-    OauthController.setHeaders
-  )
+  asyncHandler(OauthController.setHeaders),
 );
 
 export default router;

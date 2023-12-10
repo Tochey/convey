@@ -6,10 +6,10 @@ type Optional<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;
 
 export type IUser = Optional<
   InferSchemaType<typeof userSchema>,
-  "createdAt" | "updatedAt" 
+  "createdAt" | "updatedAt"
 > & { _id: Types.ObjectId };
 
 export type IDeployment = Optional<
   InferSchemaType<typeof deploymentSchema>,
-  "createdAt" | "updatedAt" 
+  "createdAt" | "updatedAt"
 > & { _id: Types.ObjectId };

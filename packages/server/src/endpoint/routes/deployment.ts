@@ -14,7 +14,7 @@ const create = z.object({
   buildCommand: z.string().min(4),
   startCommand: z.string().min(4),
   rootDirectory: z.string().min(1),
-  port: z.string(),
+  port: z.number(),
 });
 
 router.post(
@@ -22,11 +22,9 @@ router.post(
   validateRequest({
     body: create,
     validationErrorMessage: VALIDATION_ERR_MESSAGE,
-
   }),
   authenticateRequest(),
-  asyncHandler(DeploymentController.create)
-  
+  asyncHandler(DeploymentController.create),
 );
 
 export default router;

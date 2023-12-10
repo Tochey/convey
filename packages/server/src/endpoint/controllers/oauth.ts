@@ -19,6 +19,6 @@ export async function setHeaders(req: Request) {
     undefined,
     undefined,
     undefined,
-    `${process.env.DOMAIN_CLIENT}/login?${X_TOKEN_HEADER_KEY}=${accessToken}&${REFRESH_TOKEN_HEADER_KEY}=${refreshToken}`
+    `${process.env.DOMAIN_CLIENT}/login?${X_TOKEN_HEADER_KEY}=${accessToken}&${REFRESH_TOKEN_HEADER_KEY}=${refreshToken}`,
   );
 }

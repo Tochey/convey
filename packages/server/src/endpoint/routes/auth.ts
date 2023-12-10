@@ -1,10 +1,7 @@
 import { Router } from "express";
 import * as AuthController from "../controllers/auth";
 import z from "zod";
-import {
-  asyncHandler,
-  validateRequest,
-} from "../../middleware/api-util";
+import { asyncHandler, validateRequest } from "../../middleware/api-util";
 import { VALIDATION_ERR_MESSAGE } from "../../constants";
 
 const router = Router();
@@ -54,7 +51,7 @@ router.post(
     body: register,
     validationErrorMessage: VALIDATION_ERR_MESSAGE,
   }),
-  asyncHandler(AuthController.register)
+  asyncHandler(AuthController.register),
 );
 
 router.post(
@@ -63,7 +60,7 @@ router.post(
     body: login,
     validationErrorMessage: VALIDATION_ERR_MESSAGE,
   }),
-  asyncHandler(AuthController.login)
+  asyncHandler(AuthController.login),
 );
 
 export default router;

@@ -33,5 +33,5 @@ export const userSchema = new Schema(
       sparse: true,
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );

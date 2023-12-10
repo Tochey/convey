@@ -6,7 +6,15 @@ function main() {
 }
 
 function createDockerFile() {
-  const { rootDirectory, buildCommand, startCommand, port } = process.env;
+  const { DEPLOYMENT } = process.env;
+
+  if (!DEPLOYMENT) {
+    throw new Error(
+      "Please provide DEPLOYMENT environment variable with the deployment configuration",
+    );
+  }
+  const { rootDirectory, port, buildCommand, startCommand } =
+    JSON.parse(DEPLOYMENT);
 
   const sc = startCommand
     ?.split(" ")

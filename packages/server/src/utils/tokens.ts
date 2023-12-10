@@ -19,7 +19,7 @@ export async function createTokens({ userId, refreshSecret }: params) {
     process.env.JWT_ACCESS_SECRET as string,
     {
       expiresIn: "1m",
-    }
+    },
   );
 
   const createRefreshToken = jwt.sign(
@@ -29,7 +29,7 @@ export async function createTokens({ userId, refreshSecret }: params) {
     refreshSecret,
     {
       expiresIn: "7d",
-    }
+    },
   );
 
   return Promise.all([createAccessToken, createRefreshToken]);
@@ -77,12 +77,12 @@ async function refresh(token: string, res: Response) {
 export async function validateToken(
   accessToken: string,
   refreshToken: string,
-  res: Response
+  res: Response,
 ) {
   try {
     const decoded = jwt.verify(
       accessToken,
-      process.env.JWT_ACCESS_SECRET as string
+      process.env.JWT_ACCESS_SECRET as string,
     ) as DecodedToken;
     return decoded;
   } catch (err) {

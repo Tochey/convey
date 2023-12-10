@@ -1,5 +1,5 @@
 import { Types } from "mongoose";
-import { User,  IUser } from "@convey/shared";
+import { User, IUser } from "@convey/shared";
 import CustomError from "../utils/custom-err";
 
 export async function getUser(id: Types.ObjectId): Promise<IUser> {
