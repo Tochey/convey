@@ -93,21 +93,6 @@ export class Core extends cdk.Stack {
       compatibility: ecs.Compatibility.FARGATE,
     });
 
-    td.addToExecutionRolePolicy(
-      new iam.PolicyStatement({
-        actions: [
-          "ecr:GetAuthorizationToken",
-          "ecr:InitiateLayerUpload",
-          "ecr:UploadLayerPart",
-          "ecr:CompleteLayerUpload",
-          "ecr:PutImage",
-          "ecr:BatchGetImage",
-          "ecr:BatchCheckLayerAvailability",
-        ],
-        resources: ["*"],
-      }),
-    );
-
     const svc = new ecs.FargateService(this, "convey-service", {
       cluster: cluster,
       taskDefinition: td,
@@ -115,14 +100,32 @@ export class Core extends cdk.Stack {
       desiredCount: 0,
     });
 
+    const kanikoCreds = secrets.Secret.fromSecretNameV2(
+      this,
+      "kaniko-creds",
+      "convey/kaniko/creds",
+    );
+
     const container = td.addContainer("kaniko", {
       image: ecs.ContainerImage.fromAsset("."),
       memoryLimitMiB: 32768,
       logging: new ecs.AwsLogDriver({
         streamPrefix: "kaniko",
       }),
+      secrets: {
+        // longed lived creds arent best practices but kaniko has no idea how to use short lived creds/task roles
+        AWS_ACCESS_KEY_ID: ecs.Secret.fromSecretsManager(
+          kanikoCreds,
+          "AWS_ACCESS_KEY_ID",
+        ),
+        AWS_SECRET_ACCESS_KEY: ecs.Secret.fromSecretsManager(
+          kanikoCreds,
+          "AWS_SECRET_ACCESS_KEY",
+        ),
+      },
       environment: {
         AWS_SDK_LOAD_CONFIG: "true",
+        AWS_DEFAULT_REGION: "us-east-1",
       },
     });
 
