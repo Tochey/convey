@@ -8,10 +8,33 @@ import { Deployment, IDeployment } from "@convey/shared";
 
 export async function create(req: Request) {
   const { id } = req.ctx.decodedToken;
-  const { url, branch, buildCommand, startCommand, rootDirectory, port } =
-    req.body;
+  const {
+    name,
+    url,
+    branch,
+    buildCommand,
+    startCommand,
+    rootDirectory,
+    port,
+    env,
+  } = req.body;
+  
+  const dply: Partial<IDeployment> = {
+    rootDirectory: rootDirectory || undefined,
+    env: env || undefined,
+    branch: branch || undefined,
+  };
 
   const user = await UserDAL.getUser(id);
+
+  const doesExist = await Deployment.findOne({
+    user: user._id,
+    github_url: url,
+  });
+
+  if (doesExist) {
+    throw new CustomError(400, "Deployment already exists");
+  }
 
   const gh = new Github(url);
   let info: Awaited<ReturnType<typeof gh.validate>>;
@@ -22,21 +45,22 @@ export async function create(req: Request) {
     throw new CustomError(400, (err as Error).message);
   }
 
+  // this isnt needed for now, maybe add github project metadata?
   const {
     data: { clone_url },
   } = info;
 
   const deployment: IDeployment = await Deployment.create({
     user: user._id,
-    github_url: clone_url,
-    branch,
+    github_url: url,
+    name,
     buildCommand,
     startCommand,
-    rootDirectory,
     port,
+    ...dply,
   });
 
-  await createCBDeployment(deployment);
+  await createCBDeployment(deployment); // this can be offloaded to a lambda function if api res time starts to suffer
 
   return new CustomResponse("Deployment Queued", deployment, 201);
 }

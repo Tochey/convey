@@ -1,7 +1,12 @@
 import { Schema } from "mongoose";
 
+
 export const deploymentSchema = new Schema(
   {
+    name: {
+      type: String,
+      required: true,
+    },
     user: {
       type: Schema.Types.ObjectId,
       ref: "User",
@@ -38,7 +43,7 @@ export const deploymentSchema = new Schema(
     },
     rootDirectory: {
       type: String,
-      required: true,
+      default: ".",
     },
     port: {
       type: Number,
@@ -46,6 +51,12 @@ export const deploymentSchema = new Schema(
     },
     deploy_url: {
       type: String,
+    },
+    logs: {
+      type: [String],
+    },
+    env: {
+      type: Schema.Types.Mixed,
     },
   },
   { timestamps: true },

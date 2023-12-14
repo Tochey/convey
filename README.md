@@ -6,4 +6,10 @@ One click deploy node applications with mimnal configuration
 
 express + AWS(SST) + dynamo
 
-# req spec
+# next steps
+
+- create deployment to handle env variables //
+- add name to deployment schema //
+-  enp to handle updating the user on status of deployment (long polling)
+- update deployment endpoint
+- delete deployment endpoint

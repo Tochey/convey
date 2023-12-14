@@ -9,11 +9,10 @@ const router = Router();
 import z from "zod";
 
 const create = z.object({
+  name : z.string().min(3).max(80),
   url: z.string().url(),
-  branch: z.string(),
   buildCommand: z.string().min(4),
   startCommand: z.string().min(4),
-  rootDirectory: z.string().min(1),
   port: z.number(),
 });
 

@@ -38,7 +38,7 @@ export const handler = async (event: SQSEvent) => {
     const { taskArn } = task;
     if (!taskArn) throw new Error("No taskArn found");
     await pollBuildContainer(taskArn);
-    await createDeployment(config.toObject());
+    await createDeployment(config);
   }
 };
 
@@ -89,8 +89,10 @@ async function startBuildContainer(body: ConveyQueueMessage) {
   return data;
 }
 
-async function createDeployment(config: any) {
+async function createDeployment(config: Awaited<ReturnType<typeof getDeploymentConfig>>) {
   if (!config) throw new Error("No config found");
+
+  console.log(config);
 
   const id = `${DEPLOYMENT_PREFIX}${config._id.toString()}`;
   const command = new CreateFunctionCommand({
@@ -107,6 +109,7 @@ async function createDeployment(config: any) {
         NPM_CONFIG_CACHE: "/tmp/.npm",
         AWS_LWA_READINESS_CHECK_PATH: "/health",
         AWS_LWA_PORT: config.port.toString(),
+        ...config.env,
       },
     },
   });
