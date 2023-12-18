@@ -1,6 +1,5 @@
 import { Schema } from "mongoose";
 
-
 export const deploymentSchema = new Schema(
   {
     name: {
@@ -57,7 +56,7 @@ export const deploymentSchema = new Schema(
     },
     env: {
       type: Schema.Types.Mixed,
-    },
+    }
   },
   { timestamps: true },
 );

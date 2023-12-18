@@ -18,7 +18,7 @@ export async function create(req: Request) {
     port,
     env,
   } = req.body;
-  
+
   const dply: Partial<IDeployment> = {
     rootDirectory: rootDirectory || undefined,
     env: env || undefined,
@@ -63,4 +63,32 @@ export async function create(req: Request) {
   await createCBDeployment(deployment); // this can be offloaded to a lambda function if api res time starts to suffer
 
   return new CustomResponse("Deployment Queued", deployment, 201);
+}
+
+export async function list(req: Request) {
+  const { id } = req.ctx.decodedToken;
+
+  const user = await UserDAL.getUser(id);
+
+  const deployments = await Deployment.find({ user: user._id });
+
+  return new CustomResponse("Deployments", deployments);
+}
+
+export async function getLogs(req: Request) {
+  const { id } = req.ctx.decodedToken;
+  const { id: dplyId } = req.params;
+
+  const user = await UserDAL.getUser(id);
+
+  const deployment = await Deployment.findOne({
+    _id: dplyId,
+    user: user._id,
+  });
+
+  if (!deployment) {
+    throw new CustomError(404, "Deployment not found");
+  }
+
+  return new CustomResponse("Logs", deployment.logs);
 }

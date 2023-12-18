@@ -26,4 +26,16 @@ router.post(
   asyncHandler(DeploymentController.create),
 );
 
+router.get(
+  "/list",
+  authenticateRequest(),
+  asyncHandler(DeploymentController.list),
+)
+
+router.get(
+  "/logs/:id",
+  authenticateRequest(),
+  asyncHandler(DeploymentController.getLogs),
+)
+
 export default router;
