@@ -5,9 +5,7 @@ COPY . "/var/task"
 WORKDIR "/var/task"
 
 # Install call deps - Install curl for health check if using lb
-RUN apk --no-cache add curl && \
-    touch .env && \
-    npm ci
+RUN npm ci
 
 RUN npm run backend:build
 

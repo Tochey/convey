@@ -56,7 +56,13 @@ export const deploymentSchema = new Schema(
     },
     env: {
       type: Schema.Types.Mixed,
-    }
+    },
+    type: {
+      type: String,
+      required: true,
+      default: "LAMBDA",
+      enum: ["LAMBDA", "CONTAINER"],
+    },
   },
   { timestamps: true },
 );

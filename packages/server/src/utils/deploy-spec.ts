@@ -36,7 +36,7 @@ phases:
       - DEPLOYMENT_ID=$(echo "$DEPLOYMENT" | jq -r '._id')
       - BUILD_ASSET_KEY=build.tar.gz
       - S3_PATH=s3://$BUCKET_NAME/customer/deployments/cus-$USER_ID/$BUILD_ASSET_KEY
-      - MESSAGE_BODY='{"userId":"'"$USER_ID"'","deploymentId":"'"$DEPLOYMENT_ID"'","s3Path":"'"$S3_PATH"'"}'
+      - MESSAGE_BODY='{"userId":"'"$USER_ID"'","deploymentId":"'"$DEPLOYMENT_ID"'","s3Path":"'"$S3_PATH"'", "authToken":"'"$DEPLOYMENT_AUTH_TOKEN"'"}'
       - aws s3 cp s3://$BUCKET_NAME/scripts . --recursive
       - node docker.js
       - env 
@@ -44,7 +44,15 @@ phases:
       - tar -C $CODEBUILD_SRC_DIR -zcvf $BUILD_ASSET_KEY .
       - aws s3 cp $BUILD_ASSET_KEY $S3_PATH
       - echo $MESSAGE_BODY > data.json
-      - aws sqs send-message --queue-url $QUEUE_URL --message-body file://data.json
+      # - aws sqs send-message --queue-url $QUEUE_URL --message-body file://data.json
+      - echo "Sending PATCH request using cURL"
+      - |
+        echo '{"status": "queued"}' > payload.json
+      # - curl -X PATCH \
+          -H "Content-Type: application/json" \
+          -H "x-token: $DEPLOYMENT_AUTH_TOKEN" \
+          -d @payload.json \  
+          $SERVER_URL/deployment/update/$DEPLOYMENT_ID
   #post_build:
     #commands:
       # - command

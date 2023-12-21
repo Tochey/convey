@@ -7,3 +7,7 @@ export const CODEBUILD_CONFIG = {
   image: "aws/codebuild/amazonlinux-x86_64-lambda-standard:nodejs18",
   compute: "BUILD_LAMBDA_4GB",
 } as const;
+
+export const ACCESS_TOKEN_EXPIRATION = "1m";
+export const PRINCIPAL_TOKEN_EXPIRATION = "7d";
+export const REFRESH_TOKEN_EXPIRATION = "7d";

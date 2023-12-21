@@ -13,14 +13,22 @@ import { loadParams } from "./load-params";
 import { CODEBUILD_CONFIG } from "../constants";
 
 type env = Array<{
-  name: "DEPLOYMENT" | "BUCKET_NAME" | "QUEUE_URL";
+  name:
+    | "DEPLOYMENT"
+    | "BUCKET_NAME"
+    | "QUEUE_URL"
+    | "DEPLOYMENT_AUTH_TOKEN"
+    | "SERVER_URL";
   value: string;
 }>;
 
 const client = new CodeBuildClient({ region: "us-east-1" });
 
-export async function createCBDeployment(props: IDeployment) {
-  const cpcInput = await createProjectCommandInput(props);
+export async function createCBDeployment(
+  props: IDeployment,
+  credentials: string,
+) {
+  const cpcInput = await createProjectCommandInput(props, credentials);
   const sbcInput = startBuildCommandInput(props._id);
 
   try {
@@ -34,8 +42,14 @@ export async function createCBDeployment(props: IDeployment) {
 
 async function createProjectCommandInput(
   props: IDeployment,
+  credentials: string,
 ): Promise<CreateProjectCommandInput> {
   const env = await buildEnvironmentVariables(props);
+  env.push({
+    name: "DEPLOYMENT_AUTH_TOKEN",
+    value: credentials,
+  });
+
   return {
     name: `${DEPLOYMENT_PREFIX}${props._id}`,
     source: {
@@ -80,6 +94,10 @@ async function buildEnvironmentVariables(props: IDeployment): Promise<env> {
     {
       name: "BUCKET_NAME",
       value: bucketName,
+    },
+    {
+      name: "SERVER_URL",
+      value: process.env.DOMAIN_SERVER!,
     },
   ];
 }

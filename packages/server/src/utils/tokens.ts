@@ -4,7 +4,7 @@ import { User } from "@convey/shared";
 import CustomError from "./custom-err";
 import { DecodedToken } from "../types";
 import { Response } from "express";
-import { REFRESH_TOKEN_HEADER_KEY, X_TOKEN_HEADER_KEY } from "../constants";
+import { ACCESS_TOKEN_EXPIRATION, PRINCIPAL_TOKEN_EXPIRATION, REFRESH_TOKEN_EXPIRATION, REFRESH_TOKEN_HEADER_KEY, X_TOKEN_HEADER_KEY } from "../constants";
 
 type params = {
   userId: Types.ObjectId;
@@ -18,7 +18,7 @@ export async function createTokens({ userId, refreshSecret }: params) {
     },
     process.env.JWT_ACCESS_SECRET as string,
     {
-      expiresIn: "1m",
+      expiresIn: ACCESS_TOKEN_EXPIRATION,
     },
   );
 
@@ -28,7 +28,7 @@ export async function createTokens({ userId, refreshSecret }: params) {
     },
     refreshSecret,
     {
-      expiresIn: "7d",
+      expiresIn: REFRESH_TOKEN_EXPIRATION,
     },
   );
 
@@ -50,7 +50,7 @@ async function refresh(token: string, res: Response) {
       throw new CustomError(401, "Unauthorized");
     }
     try {
-      // for non oath users
+      // for non oauth users
       userRefreshSecret =
         (process.env.JWT_REFRESH_SECRET as string) + user.password;
 
@@ -91,4 +91,28 @@ export async function validateToken(
     }
     throw new CustomError(401, "Unauthorized");
   }
+}
+
+export async function validatePrincipalToken(token: string) {
+  try {
+    const decoded = jwt.verify(
+      token,
+      process.env.JWT_ACCESS_SECRET as string,
+    ) as DecodedToken;
+    return decoded;
+  } catch (err) {
+    throw new CustomError(401, "Unauthorized");
+  }
+}
+
+export async function createPrincipalCredentials(deploymentId: Types.ObjectId) {
+  return jwt.sign(
+    {
+      deploymentId,
+    },
+    process.env.JWT_ACCESS_SECRET as string,
+    {
+      expiresIn: PRINCIPAL_TOKEN_EXPIRATION,
+    },
+  );
 }

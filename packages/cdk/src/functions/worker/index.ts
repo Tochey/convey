@@ -13,6 +13,7 @@ import {
 import { SQSEvent } from "aws-lambda";
 import { DEPLOYMENT_PREFIX, Deployment } from "@convey/shared";
 import { connect } from "./connect";
+import { Types } from "mongoose";
 
 const region = "us-east-1";
 const ecs = new ECSClient({ region });
@@ -20,9 +21,20 @@ const lambda = new LambdaClient({ region });
 
 type ConveyQueueMessage = {
   userId: string;
-  deploymentId: string;
+  deploymentId: Types.ObjectId;
   s3Path: string;
 };
+
+type UpdateData = {
+  status?: string;
+  logs?: Array<string>;
+};
+function logMessage(message: string) {
+  return `${new Date().getHours()}:${String(new Date().getMinutes()).padStart(
+    2,
+    "0",
+  )} - ${message}`;
+}
 
 export const handler = async (event: SQSEvent) => {
   const { Records } = event;
@@ -56,6 +68,11 @@ async function pollBuildContainer(taskArn: string) {
 }
 
 async function startBuildContainer(body: ConveyQueueMessage) {
+  await updatedDeploymentStatus(body.deploymentId, {
+    status: "building",
+    logs: [logMessage("Starting build container")],
+  });
+
   const command = new RunTaskCommand({
     cluster: "convey",
     taskDefinition: "ConveyCorekanikobuild70270354",
@@ -89,10 +106,15 @@ async function startBuildContainer(body: ConveyQueueMessage) {
   return data;
 }
 
-async function createDeployment(config: Awaited<ReturnType<typeof getDeploymentConfig>>) {
+async function createDeployment(
+  config: Awaited<ReturnType<typeof getDeploymentConfig>>,
+) {
   if (!config) throw new Error("No config found");
 
-  console.log(config);
+  await updatedDeploymentStatus(config._id, {
+    status: "deploying",
+    logs: [logMessage("Deploying serverless function")],
+  });
 
   const id = `${DEPLOYMENT_PREFIX}${config._id.toString()}`;
   const command = new CreateFunctionCommand({
@@ -153,15 +175,40 @@ async function createFunctionDeployment(id: string, config: any) {
       { _id: config._id },
       { deploy_url: d.FunctionUrl },
     );
+
+    await updatedDeploymentStatus(config._id, {
+      status: "deployed",
+      logs: [logMessage("Deployment successful")],
+    });
   } catch (err) {
     console.log(err);
   }
 }
 
-async function getDeploymentConfig(deploymentId: string) {
+async function getDeploymentConfig(deploymentId: Types.ObjectId) {
   const config = await Deployment.findById(deploymentId);
   if (!config) throw new Error("No config found");
   return config;
+}
+
+async function updatedDeploymentStatus(
+  deploymentId: Types.ObjectId,
+  data: UpdateData,
+) {
+  const deployment = await Deployment.findOneAndUpdate(
+    { _id: deploymentId },
+    {
+      $set: {
+        status: data.status,
+      },
+      $push: {
+        logs: data.logs,
+      },
+    },
+    { new: true },
+  );
+
+  if (!deployment) throw new Error("No deployment found");
 }
 
 // function loadMockEvent() {

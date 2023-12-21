@@ -57,6 +57,7 @@ function validateRequest(validationSchema: ValidationSchema): RequestHandler {
       try {
         zodSchema.parse(req[key] ?? {});
       } catch (err: ZodError | unknown) {
+        console.log(err);
         let errMessage = "Invalid request body";
         if (err instanceof ZodError) {
           errMessage = err.issues.map((issue) => issue.message).join("\n");

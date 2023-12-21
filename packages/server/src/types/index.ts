@@ -4,6 +4,7 @@ type ExpressRequest = import("express").Request;
 
 export interface DecodedToken {
   id: Types.ObjectId;
+  deploymentId?: Types.ObjectId;  
 }
 
 export interface Context {

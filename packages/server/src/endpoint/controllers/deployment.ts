@@ -5,6 +5,9 @@ import CustomError from "../../utils/custom-err";
 import { createCBDeployment } from "../../lib/codebuild";
 import * as UserDAL from "../../dal/user";
 import { Deployment, IDeployment } from "@convey/shared";
+import { createPrincipalCredentials } from "../../utils/tokens";
+import { updateDeployment } from "../../dal/deployment";
+import { Types } from "mongoose";
 
 export async function create(req: Request) {
   const { id } = req.ctx.decodedToken;
@@ -17,23 +20,27 @@ export async function create(req: Request) {
     rootDirectory,
     port,
     env,
+    type,
   } = req.body;
 
   const dply: Partial<IDeployment> = {
     rootDirectory: rootDirectory || undefined,
     env: env || undefined,
     branch: branch || undefined,
+    type: type || undefined,
   };
 
   const user = await UserDAL.getUser(id);
 
-  const doesExist = await Deployment.findOne({
-    user: user._id,
-    github_url: url,
-  });
+  if (process.env.NODE_ENV === "production") {
+    const doesExist = await Deployment.findOne({
+      user: user._id,
+      github_url: url,
+    });
 
-  if (doesExist) {
-    throw new CustomError(400, "Deployment already exists");
+    if (doesExist) {
+      throw new CustomError(400, "Deployment already exists");
+    }
   }
 
   const gh = new Github(url);
@@ -60,9 +67,26 @@ export async function create(req: Request) {
     ...dply,
   });
 
-  await createCBDeployment(deployment); // this can be offloaded to a lambda function if api res time starts to suffer
+  const credentials = await createPrincipalCredentials(deployment._id);
+
+  await createCBDeployment(deployment, credentials); // this can be offloaded to a lambda function if api res time starts to suffer
 
   return new CustomResponse("Deployment Queued", deployment, 201);
+}
+
+export async function get(req: Request) {
+  const { id } = req.ctx.decodedToken;
+  const { id: dplyId } = req.params;
+
+  await UserDAL.getUser(id);
+
+  const deployment = await Deployment.findById(new Types.ObjectId(dplyId));
+
+  if (!deployment) {
+    throw new CustomError(404, "Deployment not found");
+  }
+
+  return new CustomResponse("Deployment", deployment);
 }
 
 export async function list(req: Request) {
@@ -75,20 +99,35 @@ export async function list(req: Request) {
   return new CustomResponse("Deployments", deployments);
 }
 
-export async function getLogs(req: Request) {
-  const { id } = req.ctx.decodedToken;
+export async function update(req: Request) {
+  const { id, deploymentId } = req.ctx.decodedToken;
   const { id: dplyId } = req.params;
+  const body = req.body;
 
-  const user = await UserDAL.getUser(id);
-
-  const deployment = await Deployment.findOne({
-    _id: dplyId,
-    user: user._id,
-  });
-
-  if (!deployment) {
-    throw new CustomError(404, "Deployment not found");
+  if (process.env.NODE_ENV === "dev" && body.id) {
+    //authing in dev mode
+    delete body.id;
   }
 
-  return new CustomResponse("Logs", deployment.logs);
+  if (!body) {
+    throw new CustomError(400, "No body provided");
+  }
+
+  if (id && (body.status || body.logs)) {
+    throw new CustomError(400, "Invalid request");
+  }
+
+  if (deploymentId && deploymentId.toString() === dplyId) {
+    if (body.status || body.logs) {
+      const deployment = await updateDeployment(deploymentId, body);
+      return new CustomResponse("Deployment Updated", deployment);
+    } else {
+      throw new CustomError(400, "Invalid request");
+    }
+  }
+
+  await UserDAL.getUser(id);
+
+  const deployment = await updateDeployment(new Types.ObjectId(dplyId), body);
+  return new CustomResponse("Deployment Updated", deployment);
 }
