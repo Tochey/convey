@@ -5,7 +5,6 @@ import CustomError from "../../utils/custom-err";
 import { createCBDeployment } from "../../lib/codebuild";
 import * as UserDAL from "../../dal/user";
 import { Deployment, IDeployment } from "@convey/shared";
-import { createPrincipalCredentials } from "../../utils/tokens";
 import { updateDeployment } from "../../dal/deployment";
 import { Types } from "mongoose";
 
@@ -67,9 +66,8 @@ export async function create(req: Request) {
     ...dply,
   });
 
-  const credentials = await createPrincipalCredentials(deployment._id);
-
-  await createCBDeployment(deployment, credentials); // this can be offloaded to a lambda function if api res time starts to suffer
+  await createCBDeployment(deployment); // this can be offloaded to a lambda function if api res time starts to suffer
+  await updateDeployment(deployment._id, { status: "queued" });
 
   return new CustomResponse("Deployment Queued", deployment, 201);
 }

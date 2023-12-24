@@ -182,6 +182,10 @@ async function createFunctionDeployment(id: string, config: any) {
     });
   } catch (err) {
     console.log(err);
+    await updatedDeploymentStatus(config._id, {
+      status: "failed",
+      logs: [logMessage("Deployment Failed")],
+    });
   }
 }
 

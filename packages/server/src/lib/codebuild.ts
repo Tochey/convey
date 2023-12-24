@@ -24,11 +24,8 @@ type env = Array<{
 
 const client = new CodeBuildClient({ region: "us-east-1" });
 
-export async function createCBDeployment(
-  props: IDeployment,
-  credentials: string,
-) {
-  const cpcInput = await createProjectCommandInput(props, credentials);
+export async function createCBDeployment(props: IDeployment) {
+  const cpcInput = await createProjectCommandInput(props);
   const sbcInput = startBuildCommandInput(props._id);
 
   try {
@@ -42,13 +39,8 @@ export async function createCBDeployment(
 
 async function createProjectCommandInput(
   props: IDeployment,
-  credentials: string,
 ): Promise<CreateProjectCommandInput> {
   const env = await buildEnvironmentVariables(props);
-  env.push({
-    name: "DEPLOYMENT_AUTH_TOKEN",
-    value: credentials,
-  });
 
   return {
     name: `${DEPLOYMENT_PREFIX}${props._id}`,

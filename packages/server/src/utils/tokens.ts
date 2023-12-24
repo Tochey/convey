@@ -92,27 +92,3 @@ export async function validateToken(
     throw new CustomError(401, "Unauthorized");
   }
 }
-
-export async function validatePrincipalToken(token: string) {
-  try {
-    const decoded = jwt.verify(
-      token,
-      process.env.JWT_ACCESS_SECRET as string,
-    ) as DecodedToken;
-    return decoded;
-  } catch (err) {
-    throw new CustomError(401, "Unauthorized");
-  }
-}
-
-export async function createPrincipalCredentials(deploymentId: Types.ObjectId) {
-  return jwt.sign(
-    {
-      deploymentId,
-    },
-    process.env.JWT_ACCESS_SECRET as string,
-    {
-      expiresIn: PRINCIPAL_TOKEN_EXPIRATION,
-    },
-  );
-}

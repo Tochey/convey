@@ -44,15 +44,7 @@ phases:
       - tar -C $CODEBUILD_SRC_DIR -zcvf $BUILD_ASSET_KEY .
       - aws s3 cp $BUILD_ASSET_KEY $S3_PATH
       - echo $MESSAGE_BODY > data.json
-      # - aws sqs send-message --queue-url $QUEUE_URL --message-body file://data.json
-      - echo "Sending PATCH request using cURL"
-      - |
-        echo '{"status": "queued"}' > payload.json
-      # - curl -X PATCH \
-          -H "Content-Type: application/json" \
-          -H "x-token: $DEPLOYMENT_AUTH_TOKEN" \
-          -d @payload.json \  
-          $SERVER_URL/deployment/update/$DEPLOYMENT_ID
+      - aws sqs send-message --queue-url $QUEUE_URL --message-body file://data.json
   #post_build:
     #commands:
       # - command

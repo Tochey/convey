@@ -2,7 +2,7 @@ import { Handler, NextFunction, Response } from "express";
 import CustomError from "../utils/custom-err";
 import { DecodedToken, Request } from "../types";
 import { REFRESH_TOKEN_HEADER_KEY, X_TOKEN_HEADER_KEY } from "../constants";
-import { validatePrincipalToken, validateToken } from "../utils/tokens";
+import {  validateToken } from "../utils/tokens";
 import mongoose from "mongoose";
 
 function authenticateRequest(allowPrincipals: boolean = false): Handler {
@@ -16,9 +16,7 @@ function authenticateRequest(allowPrincipals: boolean = false): Handler {
     const accessToken = headers[X_TOKEN_HEADER_KEY] as string;
     const refreshToken = headers[REFRESH_TOKEN_HEADER_KEY] as string;
     try {
-      if (allowPrincipals && accessToken && !refreshToken) { // this req is probably coming from CODEBUILD OR LAMBDA, should probably split this to its own middlewa
-        token = await validatePrincipalToken(accessToken);
-      } else if (accessToken && refreshToken) {
+      if (accessToken && refreshToken) {
         token = await validateToken(accessToken, refreshToken, _res);
       } else if (process.env.NODE_ENV === "development") {
         token = authenticateWithBody(req.body);
