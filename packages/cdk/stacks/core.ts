@@ -10,6 +10,8 @@ import { Runtime } from "aws-cdk-lib/aws-lambda";
 import { SqsEventSource } from "aws-cdk-lib/aws-lambda-event-sources";
 import * as ssm from "aws-cdk-lib/aws-ssm";
 import * as secrets from "aws-cdk-lib/aws-secretsmanager";
+
+const kanikoId = "kaniko"
 export class Core extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
@@ -42,7 +44,7 @@ export class Core extends cdk.Stack {
       managedPolicies: [
         iam.ManagedPolicy.fromAwsManagedPolicyName("AdministratorAccess"),
       ],
-    });
+    }); //TODO: scope this
 
     bucket.grantWrite(cbServeiceRole);
     const dlq = new sqs.Queue(this, "dlq", {
@@ -96,7 +98,7 @@ export class Core extends cdk.Stack {
     const svc = new ecs.FargateService(this, "convey-service", {
       cluster: cluster,
       taskDefinition: td,
-      serviceName: "kaniko",
+      serviceName : kanikoId,
       desiredCount: 0,
     });
 
@@ -110,7 +112,7 @@ export class Core extends cdk.Stack {
       image: ecs.ContainerImage.fromAsset("."),
       memoryLimitMiB: 32768,
       logging: new ecs.AwsLogDriver({
-        streamPrefix: "kaniko",
+        streamPrefix: kanikoId,
       }),
       secrets: {
         // longed lived creds arent best practices but kaniko has no idea how to use short lived creds/task roles

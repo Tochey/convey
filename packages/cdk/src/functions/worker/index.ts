@@ -67,6 +67,8 @@ async function pollBuildContainer(taskArn: string) {
   } while (data.tasks[0].containers[0].lastStatus !== "STOPPED");
 }
 
+// TODO: S3 BUCKET KEY
+
 async function startBuildContainer(body: ConveyQueueMessage) {
   await updatedDeploymentStatus(body.deploymentId, {
     status: "building",
@@ -95,7 +97,7 @@ async function startBuildContainer(body: ConveyQueueMessage) {
             "--dockerfile",
             "Dockerfile",
             "--destination",
-            "332521570261.dkr.ecr.us-east-1.amazonaws.com/convey-test:latest",
+            "332521570261.dkr.ecr.us-east-1.amazonaws.com/convey-test:latest", //TODO: change this to be dynamic
             "--force",
           ],
         },
@@ -105,6 +107,8 @@ async function startBuildContainer(body: ConveyQueueMessage) {
   const data = await ecs.send(command);
   return data;
 }
+
+//TODO: figure out ecr repo stuff
 
 async function createDeployment(
   config: Awaited<ReturnType<typeof getDeploymentConfig>>,
@@ -116,10 +120,13 @@ async function createDeployment(
     logs: [logMessage("Deploying serverless function")],
   });
 
+
+  //TODO: add FUNCTION_ROLE_ARN to core lambda
+
   const id = `${DEPLOYMENT_PREFIX}${config._id.toString()}`;
   const command = new CreateFunctionCommand({
     FunctionName: id,
-    Role: "arn:aws:iam::332521570261:role/convey-lambda-role",
+    Role: process.env.FUNCTION_ROLE_ARN ?? "arn:aws:iam::332521570261:role/convey-lambda-role",
     Code: {
       ImageUri:
         "332521570261.dkr.ecr.us-east-1.amazonaws.com/convey-test:latest",

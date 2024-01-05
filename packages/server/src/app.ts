@@ -16,7 +16,7 @@ function createApp() {
       origin: corsConfig,
       allowedHeaders: ["Content-Type", "Authorization"],
     }),
-  );
+  ); 
   app.use(json());
   app.use(urlencoded({ extended: true }));
   app.use(passport.initialize());
