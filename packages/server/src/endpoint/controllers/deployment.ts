@@ -5,7 +5,7 @@ import CustomError from "../../utils/custom-err";
 import { createCBDeployment } from "../../lib/codebuild";
 import * as UserDAL from "../../dal/user";
 import { Deployment, IDeployment } from "@convey/shared";
-import { updateDeployment } from "../../dal/deployment";
+import { deleteDeployment, updateDeployment } from "../../dal/deployment";
 import { Types } from "mongoose";
 
 export async function create(req: Request) {
@@ -67,6 +67,7 @@ export async function create(req: Request) {
   });
 
   await createCBDeployment(deployment); // this can be offloaded to a lambda function if api res time starts to suffer
+
   await updateDeployment(deployment._id, { status: "queued" });
 
   return new CustomResponse("Deployment Queued", deployment, 201);
@@ -74,11 +75,11 @@ export async function create(req: Request) {
 
 export async function get(req: Request) {
   const { id } = req.ctx.decodedToken;
-  const { id: dplyId } = req.params;
+  const deployId = req.params.id;
 
   await UserDAL.getUser(id);
 
-  const deployment = await Deployment.findById(new Types.ObjectId(dplyId));
+  const deployment = await Deployment.findById(new Types.ObjectId(deployId));
 
   if (!deployment) {
     throw new CustomError(404, "Deployment not found");
@@ -98,34 +99,35 @@ export async function list(req: Request) {
 }
 
 export async function update(req: Request) {
-  const { id, deploymentId } = req.ctx.decodedToken;
-  const { id: dplyId } = req.params;
-  const body = req.body;
+  const { id } = req.ctx.decodedToken;
+  const deployId = req.params.id;
+  const { status, logs } = req.body;
 
-  if (process.env.NODE_ENV === "dev" && body.id) {
-    //authing in dev mode
-    delete body.id;
-  }
-
-  if (!body) {
+  if (!req.body) {
     throw new CustomError(400, "No body provided");
   }
 
-  if (id && (body.status || body.logs)) {
-    throw new CustomError(400, "Invalid request");
+  if (id && (status || logs)) {
+    throw new CustomError(400, "Invalid request, try again later");
   }
 
-  if (deploymentId && deploymentId.toString() === dplyId) {
-    if (body.status || body.logs) {
-      const deployment = await updateDeployment(deploymentId, body);
-      return new CustomResponse("Deployment Updated", deployment);
-    } else {
-      throw new CustomError(400, "Invalid request");
-    }
-  }
+  const deployment = await updateDeployment(
+    new Types.ObjectId(deployId),
+    req.body,
+  );
+  return new CustomResponse("Deployment Updated", deployment);
+}
+
+export async function remove(req: Request) {
+  const { id } = req.ctx.decodedToken;
+  const deployId = req.params.id;
 
   await UserDAL.getUser(id);
+  const deployment = await deleteDeployment(new Types.ObjectId(deployId));
 
-  const deployment = await updateDeployment(new Types.ObjectId(dplyId), body);
-  return new CustomResponse("Deployment Updated", deployment);
+  if (!deployment) {
+    throw new CustomError(404, "Deployment not found");
+  }
+
+  return new CustomResponse("Deployment Deleted", deployment);
 }

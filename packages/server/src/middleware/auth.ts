@@ -5,7 +5,7 @@ import { REFRESH_TOKEN_HEADER_KEY, X_TOKEN_HEADER_KEY } from "../constants";
 import {  validateToken } from "../utils/tokens";
 import mongoose from "mongoose";
 
-function authenticateRequest(allowPrincipals: boolean = false): Handler {
+function authenticateRequest(): Handler {
   return async (
     req: Request,
     _res: Response,
@@ -43,6 +43,8 @@ function authenticateWithBody(body: Request["body"]): DecodedToken {
       "Running authorization in dev mode but still no id was provided",
     );
   }
+
+  delete body.id;
 
   return {
     id: new mongoose.Types.ObjectId(id),

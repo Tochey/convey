@@ -28,7 +28,9 @@ const update = z.object({
   rootDirectory: z.string().optional(),
   env: z.record(z.string()).optional(),
   branch: z.string().optional(),
-  status: z.enum(["queued", "building", "deploying", "deployed", "failed"]).optional(),
+  status: z
+    .enum(["queued", "building", "deploying", "deployed", "failed"])
+    .optional(),
   logs: z.array(z.string()).optional(),
 });
 
@@ -60,8 +62,14 @@ router.patch(
     body: update,
     validationErrorMessage: VALIDATION_ERR_MESSAGE,
   }),
-  authenticateRequest(true),
+  authenticateRequest(),
   asyncHandler(DeploymentController.update),
+);
+
+router.delete(
+  "/delete/:id",
+  authenticateRequest(),
+  asyncHandler(DeploymentController.remove),
 );
 
 export default router;
