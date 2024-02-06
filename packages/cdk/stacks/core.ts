@@ -10,8 +10,9 @@ import { Runtime } from "aws-cdk-lib/aws-lambda";
 import { SqsEventSource } from "aws-cdk-lib/aws-lambda-event-sources";
 import * as ssm from "aws-cdk-lib/aws-ssm";
 import * as secrets from "aws-cdk-lib/aws-secretsmanager";
+import * as ecr from "aws-cdk-lib/aws-ecr";
 
-const kanikoId = "kaniko"
+const kanikoId = "kaniko";
 export class Core extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
@@ -63,6 +64,10 @@ export class Core extends cdk.Stack {
 
     queue.grantSendMessages(cbServeiceRole);
 
+    const repo = new ecr.Repository(this, "convey-repo", {
+      repositoryName: "convey",
+    });
+
     const worker = new NodejsFunction(this, "worker", {
       entry: "src/functions/worker/index.ts",
       handler: "handler",
@@ -74,6 +79,7 @@ export class Core extends cdk.Stack {
       environment: {
         MONGO_URI: MONGO_URI.secretValueFromJson("URI").unsafeUnwrap(), //TODO: fix this
         NODE_ENV: "production",
+        ECR_REPO_URI: repo.repositoryUri,
       },
     });
 
@@ -98,7 +104,7 @@ export class Core extends cdk.Stack {
     const svc = new ecs.FargateService(this, "convey-service", {
       cluster: cluster,
       taskDefinition: td,
-      serviceName : kanikoId,
+      serviceName: kanikoId,
       desiredCount: 0,
     });
 

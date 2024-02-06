@@ -87,9 +87,5 @@ async function buildEnvironmentVariables(props: IDeployment): Promise<env> {
       name: "BUCKET_NAME",
       value: bucketName,
     },
-    {
-      name: "SERVER_URL",
-      value: process.env.DOMAIN_SERVER!,
-    },
   ];
 }

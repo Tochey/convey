@@ -18,6 +18,9 @@ import { Types } from "mongoose";
 const region = "us-east-1";
 const ecs = new ECSClient({ region });
 const lambda = new LambdaClient({ region });
+const repo =
+  process.env.ECR_REPO_URI ??
+  "332521570261.dkr.ecr.us-east-1.amazonaws.com/convey-test";
 
 type ConveyQueueMessage = {
   userId: string;
@@ -29,12 +32,6 @@ type UpdateData = {
   status?: string;
   logs?: Array<string>;
 };
-function logMessage(message: string) {
-  return `${new Date().getHours()}:${String(new Date().getMinutes()).padStart(
-    2,
-    "0",
-  )} - ${message}`;
-}
 
 export const handler = async (event: SQSEvent) => {
   const { Records } = event;
@@ -97,7 +94,7 @@ async function startBuildContainer(body: ConveyQueueMessage) {
             "--dockerfile",
             "Dockerfile",
             "--destination",
-            "332521570261.dkr.ecr.us-east-1.amazonaws.com/convey-test:latest", //TODO: change this to be dynamic
+            `${repo}:${DEPLOYMENT_PREFIX}${body.deploymentId.toString()}`,
             "--force",
           ],
         },
@@ -120,16 +117,16 @@ async function createDeployment(
     logs: [logMessage("Deploying serverless function")],
   });
 
-
   //TODO: add FUNCTION_ROLE_ARN to core lambda
 
   const id = `${DEPLOYMENT_PREFIX}${config._id.toString()}`;
   const command = new CreateFunctionCommand({
     FunctionName: id,
-    Role: process.env.FUNCTION_ROLE_ARN ?? "arn:aws:iam::332521570261:role/convey-lambda-role",
+    Role:
+      process.env.FUNCTION_ROLE_ARN ??
+      "arn:aws:iam::332521570261:role/convey-lambda-role",
     Code: {
-      ImageUri:
-        "332521570261.dkr.ecr.us-east-1.amazonaws.com/convey-test:latest",
+      ImageUri: `${repo}:${id}`,
     },
     PackageType: "Image",
     Timeout: 900,
@@ -220,6 +217,13 @@ async function updatedDeploymentStatus(
   );
 
   if (!deployment) throw new Error("No deployment found");
+}
+
+function logMessage(message: string) {
+  return `${new Date().getHours()}:${String(new Date().getMinutes()).padStart(
+    2,
+    "0",
+  )} - ${message}`;
 }
 
 // function loadMockEvent() {

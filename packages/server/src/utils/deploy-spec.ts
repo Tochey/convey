@@ -34,9 +34,9 @@ phases:
     commands:
       - USER_ID=$(echo "$DEPLOYMENT" | jq -r '.user')
       - DEPLOYMENT_ID=$(echo "$DEPLOYMENT" | jq -r '._id')
-      - BUILD_ASSET_KEY=build.tar.gz
+      - BUILD_ASSET_KEY=$CODEBUILD_RESOLVED_SOURCE_VERSION.tar.gz
       - S3_PATH=s3://$BUCKET_NAME/customer/deployments/cus-$USER_ID/$BUILD_ASSET_KEY
-      - MESSAGE_BODY='{"userId":"'"$USER_ID"'","deploymentId":"'"$DEPLOYMENT_ID"'","s3Path":"'"$S3_PATH"'", "authToken":"'"$DEPLOYMENT_AUTH_TOKEN"'"}'
+      - MESSAGE_BODY='{"userId":"'"$USER_ID"'","deploymentId":"'"$DEPLOYMENT_ID"'","s3Path":"'"$S3_PATH"'"}'
       - aws s3 cp s3://$BUCKET_NAME/scripts . --recursive
       - node docker.js
       - env 
