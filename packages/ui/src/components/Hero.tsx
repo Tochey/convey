@@ -6,7 +6,7 @@ const Hero = () => {
     <div className="flex ">
       <div className=" p-12 w-full sm:p-24 lg:w-[50%]">
         <h1 className="typography text-5xl sm:text-6xl">
-          The fastest way to deploy web applications.
+          The fastest way to deploy express applications.
         </h1>
         <h2 className="text-tertiary py-3 text-xl">
           Deploy your express apps without a P.H.D in AWS
