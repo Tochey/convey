@@ -25,7 +25,7 @@ const feat = [
 const Feature = ({ icon, title, desc }: IProps) => {
   return (
     <div
-      className=" rounded-lg
+      className="rounded-lg
    p-5 flex flex-col gap-3 bg-[#202127] items-start w-[300px] "
     >
       <p>{icon}</p>
@@ -37,7 +37,7 @@ const Feature = ({ icon, title, desc }: IProps) => {
 
 const Features = () => {
   return (
-    <div className="flex flex-col sm:flex-row gap-5 px-24 items-center ">
+    <div className="flex flex-col items-center sm:flex-row gap-5 justify-center flex-wrap mt-20">
       {feat.map((feat, idx) => {
         return <Feature key={idx} {...feat} />;
       })}
